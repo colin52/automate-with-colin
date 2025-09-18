@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useSpring, type Variants } from "framer-motion";
 import Image, { type StaticImageData } from "next/image";
+import Link from "next/link";                 // NEW
+import { useRouter } from "next/navigation";  // NEW
 
 import TypeCycle from "@/components/TypeCycle";
 import Footer from "@/components/Footer";
@@ -27,7 +29,7 @@ const STATS_COMMUNITY = [
 
 /** Logo intro animation sizing */
 const LOGO = {
-  startWidthMobile: 160, // smaller than before (≈1/2 previous)
+  startWidthMobile: 160,
   startWidthDesktop: 520,
   dockWidthMobile: 110,
   dockWidthDesktop: 240,
@@ -146,6 +148,7 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
   const [logoReady, setLogoReady] = useState(false);
   const [dock, setDock] = useState(false);
   const isMobile = useIsMobile();
+  const router = useRouter(); // NEW
 
   useEffect(() => {
     if (!logoReady) return;
@@ -166,14 +169,19 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
       animate={dock ? { top: dockTop, left: 16, x: 0, y: 0, width: dockWidth } : undefined}
       transition={{ duration: LOGO.moveMs / 1000, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
     >
-      {/* Force full reload to home when clicked (desktop + mobile) */}
-      <a
+      {/* Use Next Link + programmatic refresh to satisfy ESLint and still “reload” */}
+      <Link
         href="/"
-        onClick={(e) => { e.preventDefault(); window.location.href = "/"; }}
+        prefetch={false}
         aria-label="Go to home"
+        onClick={(e) => {
+          e.preventDefault();
+          router.replace("/");   // navigate home
+          router.refresh();      // force data/UI refresh
+        }}
       >
         <KeyedLogo theme={theme} source={brandPng} onReady={() => setLogoReady(true)} />
-      </a>
+      </Link>
     </motion.div>
   );
 }
@@ -227,7 +235,6 @@ function StatsRow({
 
 /* ---------------- Sections ---------------- */
 function Hero() {
-  // Mobile: keep the headline on a single line by shrinking and no-wrapping
   return (
     <section id="hero" data-theme="dark" className="snap-start min-h-screen bg-black text-white flex items-center [scroll-snap-stop:always]">
       <motion.div
