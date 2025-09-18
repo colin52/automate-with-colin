@@ -11,11 +11,26 @@ import brandPng from "./logo.png";
 
 /* ---------------------- TWEAKABLE OFFSETS ----------------------
    Positive numbers push content DOWN; negative numbers pull UP. */
-const PROCESS_STEPS_OFFSET = 0;   // px — moves the "Process" step cards
-const PROCESS_STATS_OFFSET = 80;  // px — moves the black stats row
+const PROCESS_STEPS_OFFSET_DESKTOP = 0;
+const PROCESS_STATS_OFFSET_DESKTOP  = 80;
+
+const PROCESS_STEPS_OFFSET_MOBILE   = 0;
+const PROCESS_STATS_OFFSET_MOBILE   = 24;
 /* -------------------------------------------------------------- */
 
 type ThemeMode = "dark" | "light";
+
+/* ---------------------- Helpers ---------------------- */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 /* ---------------------- Progress bar ---------------------- */
 function ScrollProgressBar() {
@@ -125,8 +140,10 @@ function MotionLogo({
   startDelayMs = 700,
   moveMs = 900,
   startWidth = 600,
-  dockWidthMobile = 170,
+  dockWidthMobile = 130,  // smaller on mobile to avoid occlusion
   dockWidthDesktop = 240,
+  dockTopMobile = 10,
+  dockTopDesktop = 16,
   onDone,
 }: {
   theme: ThemeMode;
@@ -135,6 +152,8 @@ function MotionLogo({
   startWidth?: number;
   dockWidthMobile?: number;
   dockWidthDesktop?: number;
+  dockTopMobile?: number;
+  dockTopDesktop?: number;
   onDone?: () => void;
 }) {
   const [logoReady, setLogoReady] = useState(false);
@@ -150,17 +169,16 @@ function MotionLogo({
     };
   }, [logoReady, startDelayMs, moveMs, onDone]);
 
-  const dockWidth =
-    typeof window !== "undefined" && window.innerWidth >= 768
-      ? dockWidthDesktop
-      : dockWidthMobile;
+  const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
+  const dockWidth = isDesktop ? dockWidthDesktop : dockWidthMobile;
+  const dockTop = isDesktop ? dockTopDesktop : dockTopMobile;
 
   return (
     <motion.div
       aria-label="Brand mark"
       className={`${dock ? "pointer-events-auto" : "pointer-events-none"} fixed z-[70] select-none`}
       initial={{ top: "50%", left: "50%", x: "-50%", y: "-50%", width: startWidth, opacity: 1 }}
-      animate={dock ? { top: 16, left: 16, x: 0, y: 0, width: dockWidth } : undefined}
+      animate={dock ? { top: dockTop, left: 16, x: 0, y: 0, width: dockWidth } : undefined}
       transition={{ duration: moveMs / 1000, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
     >
       <Link href="/" aria-label="Go to home">
@@ -235,16 +253,12 @@ function IconCode(props: React.SVGProps<SVGSVGElement>) {
 }
 
 /* ---------------------- Shared bits ---------------------- */
-/** Explicit Variants typing + tuple cast for cubic-bezier to satisfy TS */
 const sectionReveal: Variants = {
   initial: { opacity: 0, y: 16 },
   animate: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.45,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-    },
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
   },
 };
 
@@ -285,7 +299,7 @@ function Hero() {
         viewport={{ once: true, amount: 0.6 }}
         className="mx-auto max-w-6xl px-6 w-full text-center"
       >
-        <h1 className="text-5xl font-bold leading-tight md:text-6xl">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
           Smarter Systems. Stronger Businesses.
         </h1>
         <h2 className="mt-4 text-2xl md:text-3xl">
@@ -316,7 +330,7 @@ function Hero() {
             href="#contact"
             className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
           >
-            Learn To Automate
+            Talk to Colin
           </a>
         </div>
       </motion.div>
@@ -324,7 +338,7 @@ function Hero() {
   );
 }
 
-/** Page 2: Automation (top) + Playbooks (bottom ~40%) */
+/** Page 2: Automation (top) + Playbooks (bottom) with mobile stacking */
 function AutomationWithPlaybooks() {
   const items = [
     { icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
@@ -361,9 +375,13 @@ function AutomationWithPlaybooks() {
   }, [isUserInteracting]);
 
   return (
-    <section id="automation" data-theme="light" className="snap-start min-h-screen grid grid-rows-[3fr_2fr]">
+    <section
+      id="automation"
+      data-theme="light"
+      className="snap-start min-h-screen md:grid md:grid-rows-[3fr_2fr] h-full"
+    >
       {/* Top (white) */}
-      <div className="bg-white text-black flex items-center">
+      <div className="bg-white text-black flex items-center min-h-[50vh] md:min-h-0">
         <motion.div
           variants={sectionReveal}
           initial="initial"
@@ -400,7 +418,7 @@ function AutomationWithPlaybooks() {
       </div>
 
       {/* Bottom (black) */}
-      <div className="bg-black text-white flex items-center">
+      <div className="bg-black text-white flex items-center min-h-[50vh] md:min-h-0">
         <motion.div
           variants={sectionReveal}
           initial="initial"
@@ -412,28 +430,51 @@ function AutomationWithPlaybooks() {
           <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
 
           <div className="relative mt-5">
-            <button aria-label="Previous" onClick={() => scrollByCards(-1)}
-              className="hidden md:flex absolute left-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition">‹</button>
-            <button aria-label="Next" onClick={() => scrollByCards(1)}
-              className="hidden md:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition">›</button>
+            <button
+              aria-label="Previous"
+              onClick={() => scrollByCards(-1)}
+              className="hidden md:flex absolute left-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition"
+            >
+              ‹
+            </button>
+            <button
+              aria-label="Next"
+              onClick={() => scrollByCards(1)}
+              className="hidden md:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition"
+            >
+              ›
+            </button>
 
             <div
               ref={trackRef}
-              className="no-scrollbar overflow-x-auto scroll-smooth"
+              className="no-scrollbar overflow-x-auto scroll-smooth pt-2 pb-1"
               onPointerDown={() => setIsUserInteracting(true)}
               onTouchStart={() => setIsUserInteracting(true)}
             >
               <div className="flex min-w-[640px] gap-4 pr-1">
                 {plays.map((p, i) => (
-                  <motion.div key={p.name} initial={{ y: 10, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                    data-card className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur">
+                  <motion.div
+                    key={p.name}
+                    initial={{ y: 10, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    data-card
+                    className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur"
+                  >
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium">{p.name}</h3>
-                      <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{p.time}</span>
+                      <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">
+                        {p.time}
+                      </span>
                     </div>
                     <p className="mt-2 text-white/85">{p.result}</p>
-                    <a href="#contact" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">See how it works →</a>
+                    <a
+                      href="#contact"
+                      className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4"
+                    >
+                      See how it works →
+                    </a>
                   </motion.div>
                 ))}
               </div>
@@ -450,14 +491,19 @@ function AutomationWithPlaybooks() {
   );
 }
 
-/** Page 3: Process — step grid + adjustable stats row */
+/** Page 3: Process — responsive offsets to avoid snap jump / logo overlap on mobile */
 function ProcessPage() {
+  const isMobile = useIsMobile();
+
   const steps = [
     { k: "Discover", d: "Map goals & bottlenecks." },
     { k: "Design", d: "Blueprint the future workflow." },
     { k: "Deliver", d: "Ship MVP, iterate with data." },
     { k: "Uplift", d: "Measure, train, hand off." },
   ];
+
+  const stepsOffset = isMobile ? PROCESS_STEPS_OFFSET_MOBILE : PROCESS_STEPS_OFFSET_DESKTOP;
+  const statsOffset = isMobile ? PROCESS_STATS_OFFSET_MOBILE : PROCESS_STATS_OFFSET_DESKTOP;
 
   return (
     <section id="process" data-theme="light" className="snap-start min-h-screen bg-white text-black flex items-center">
@@ -470,7 +516,7 @@ function ProcessPage() {
           whileInView="animate"
           viewport={{ once: true, amount: 0.5 }}
           className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-center"
-          style={{ marginTop: PROCESS_STEPS_OFFSET }}
+          style={{ marginTop: stepsOffset }}
         >
           {steps.map((s, i) => (
             <motion.div key={s.k} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
@@ -483,7 +529,7 @@ function ProcessPage() {
           ))}
         </motion.div>
 
-        <div className="flex justify-center" style={{ marginTop: PROCESS_STATS_OFFSET }}>
+        <div className="flex justify-center" style={{ marginTop: statsOffset }}>
           <DarkStatsRow />
         </div>
       </div>
@@ -521,17 +567,32 @@ function CommunityPage() {
   );
 }
 
-/** Page 5: Contact — centered with footer accounted for (bottom padding) */
-function ContactPage({ onInViewChange }: { onInViewChange?: (visible: boolean) => void }) {
+/** Page 5: Contact — bigger bottom padding on mobile; later footer trigger on mobile */
+function ContactPage({
+  onInViewChange,
+  visibilityAmount = 0.6,
+}: {
+  onInViewChange?: (visible: boolean) => void;
+  visibilityAmount?: number;
+}) {
   const ref = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!ref.current) return;
-    const io = new IntersectionObserver(([e]) => onInViewChange?.(e.isIntersecting && e.intersectionRatio >= 0.5), { threshold: [0.5] });
-    io.observe(ref.current); return () => io.disconnect();
-  }, [onInViewChange]);
+    const io = new IntersectionObserver(
+      ([e]) => onInViewChange?.(e.isIntersecting && e.intersectionRatio >= visibilityAmount),
+      { threshold: [visibilityAmount] }
+    );
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, [onInViewChange, visibilityAmount]);
 
   return (
-    <section ref={ref} id="contact" data-theme="light" className="snap-start min-h-screen bg-white text-black flex items-center pb-28">
+    <section
+      ref={ref}
+      id="contact"
+      data-theme="light"
+      className="snap-start min-h-screen bg-white text-black flex items-center pb-44 md:pb-28"
+    >
       <motion.div
         variants={sectionReveal}
         initial="initial"
@@ -540,7 +601,7 @@ function ContactPage({ onInViewChange }: { onInViewChange?: (visible: boolean) =
         className="mx-auto max-w-6xl px-6 w-full text-center"
       >
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/70">Contact</p>
-        <h2 className="text-3xl font-semibold">Learn To Automate</h2>
+        <h2 className="text-3xl font-semibold">Talk to Colin</h2>
         <p className="mt-3 max-w-2xl mx-auto text-black/80">
           Bring us your bottleneck. We’ll map it, automate the grind, and add AI where it actually pays.
         </p>
@@ -560,6 +621,7 @@ function ContactPage({ onInViewChange }: { onInViewChange?: (visible: boolean) =
 /* ---------------------- Page ---------------------- */
 export default function HomeClient() {
   const theme = useSectionTheme();
+  const isMobile = useIsMobile();
   const [introRunning, setIntroRunning] = useState(true);
   const [showFooter, setShowFooter] = useState(false);
 
@@ -576,8 +638,10 @@ export default function HomeClient() {
         startDelayMs={700}
         moveMs={900}
         startWidth={600}
-        dockWidthMobile={170}
+        dockWidthMobile={130}
         dockWidthDesktop={240}
+        dockTopMobile={10}
+        dockTopDesktop={16}
         onDone={() => setIntroRunning(false)}
       />
 
@@ -586,11 +650,19 @@ export default function HomeClient() {
         <AutomationWithPlaybooks />
         <ProcessPage />
         <CommunityPage />
-        <ContactPage onInViewChange={(vis) => setShowFooter(vis)} />
+        {/* Footer appears later on mobile so it doesn't cover the CTA */}
+        <ContactPage
+          onInViewChange={(vis) => setShowFooter(vis)}
+          visibilityAmount={isMobile ? 0.85 : 0.5}
+        />
       </main>
 
       {/* Footer shows on last page; hides when scrolling up */}
-      <div className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-300 ${showFooter ? "translate-y-0" : "translate-y-full"}`}>
+      <div
+        className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-300 ${
+          showFooter ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
         <Footer />
       </div>
     </>
