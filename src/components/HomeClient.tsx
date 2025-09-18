@@ -9,14 +9,13 @@ import TypeCycle from "@/components/TypeCycle";
 import Footer from "@/components/Footer";
 import brandPng from "./logo.png";
 
-/* ---------------------- TWEAKABLE OFFSETS ----------------------
-   Positive numbers push content DOWN; negative numbers pull UP. */
-const PROCESS_STEPS_OFFSET_DESKTOP = 0;
-const PROCESS_STATS_OFFSET_DESKTOP  = 80;
-
+/* ---------------------- TWEAKABLE OFFSETS (desktop) ---------------------- */
+const PROCESS_STEPS_OFFSET_DESKTOP = 0;   // px — moves the "Process" step cards
+const PROCESS_STATS_OFFSET_DESKTOP  = 80; // px — moves the black stats row
+/* ---------------------- TWEAKABLE OFFSETS (mobile) ----------------------- */
 const PROCESS_STEPS_OFFSET_MOBILE   = 0;
 const PROCESS_STATS_OFFSET_MOBILE   = 24;
-/* -------------------------------------------------------------- */
+/* ------------------------------------------------------------------------ */
 
 type ThemeMode = "dark" | "light";
 
@@ -137,10 +136,11 @@ function KeyedLogo({
 
 function MotionLogo({
   theme,
-  startDelayMs = 700,
-  moveMs = 900,
-  startWidth = 600,
-  dockWidthMobile = 130,  // smaller on mobile to avoid occlusion
+  startDelayMs = 600,
+  moveMs = 850,
+  startWidthMobile = 300,  // ~½ previous size on phones
+  startWidthDesktop = 600,
+  dockWidthMobile = 120,
   dockWidthDesktop = 240,
   dockTopMobile = 10,
   dockTopDesktop = 16,
@@ -149,7 +149,8 @@ function MotionLogo({
   theme: ThemeMode;
   startDelayMs?: number;
   moveMs?: number;
-  startWidth?: number;
+  startWidthMobile?: number;
+  startWidthDesktop?: number;
   dockWidthMobile?: number;
   dockWidthDesktop?: number;
   dockTopMobile?: number;
@@ -158,6 +159,7 @@ function MotionLogo({
 }) {
   const [logoReady, setLogoReady] = useState(false);
   const [dock, setDock] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!logoReady) return;
@@ -169,9 +171,9 @@ function MotionLogo({
     };
   }, [logoReady, startDelayMs, moveMs, onDone]);
 
-  const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
-  const dockWidth = isDesktop ? dockWidthDesktop : dockWidthMobile;
-  const dockTop = isDesktop ? dockTopDesktop : dockTopMobile;
+  const dockWidth = isMobile ? dockWidthMobile : dockWidthDesktop;
+  const dockTop = isMobile ? dockTopMobile : dockTopDesktop;
+  const startWidth = isMobile ? startWidthMobile : startWidthDesktop;
 
   return (
     <motion.div
@@ -262,27 +264,48 @@ const sectionReveal: Variants = {
   },
 };
 
-function DarkStatsRow({ className = "" }: { className?: string }) {
-  const stats = [
-    { k: "Hours Saved", v: "12,000+" },
-    { k: "Systems Shipped", v: "120+" },
-    { k: "Template Library", v: "40+" },
-    { k: "Avg ROI (12 mo)", v: "3.7×" },
-  ];
+const STATS = [
+  { k: "Hours Saved", v: "12,000+" },
+  { k: "Systems Shipped", v: "120+" },
+  { k: "Template Library", v: "40+" },
+  { k: "Avg ROI (12 mo)", v: "3.7×" },
+];
+
+function StatsRow({
+  mobileCarousel,
+  className = "",
+}: {
+  mobileCarousel?: boolean;
+  className?: string;
+}) {
+  if (mobileCarousel) {
+    // horizontal swipe gallery on mobile
+    return (
+      <div className={`no-scrollbar flex gap-4 overflow-x-auto px-2 ${className}`}>
+        {STATS.map((s) => (
+          <div
+            key={s.k}
+            className="min-w-[240px] rounded-2xl border border-black/15 bg-black p-5 text-center text-white shadow-[0_2px_24px_rgba(0,0,0,0.08)]"
+          >
+            <div className="text-2xl font-semibold">{s.v}</div>
+            <div className="text-sm text-white/70">{s.k}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // 4-up grid on desktop
   return (
     <div className={`grid gap-6 sm:grid-cols-2 lg:grid-cols-4 justify-center ${className}`}>
-      {stats.map((s) => (
-        <motion.div
+      {STATS.map((s) => (
+        <div
           key={s.k}
-          variants={sectionReveal}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, amount: 0.3 }}
           className="rounded-2xl border border-black/15 p-5 text-center bg-black text-white shadow-[0_2px_24px_rgba(0,0,0,0.08)]"
         >
           <div className="text-2xl font-semibold">{s.v}</div>
           <div className="text-sm text-white/70">{s.k}</div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
@@ -299,7 +322,7 @@ function Hero() {
         viewport={{ once: true, amount: 0.6 }}
         className="mx-auto max-w-6xl px-6 w-full text-center"
       >
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
+        <h1 className="font-bold leading-tight text-[clamp(1.85rem,7vw,3.5rem)] md:text-6xl">
           Smarter Systems. Stronger Businesses.
         </h1>
         <h2 className="mt-4 text-2xl md:text-3xl">
@@ -378,10 +401,10 @@ function AutomationWithPlaybooks() {
     <section
       id="automation"
       data-theme="light"
-      className="snap-start min-h-screen md:grid md:grid-rows-[3fr_2fr] h-full"
+      className="snap-start min-h-screen md:grid md:grid-rows-[3fr_2fr]"
     >
-      {/* Top (white) */}
-      <div className="bg-white text-black flex items-center min-h-[50vh] md:min-h-0">
+      {/* Top (white) — add safe-space for the docked logo on phones */}
+      <div className="bg-white text-black flex items-center min-h-[50vh] md:min-h-0 pt-[max(12px,env(safe-area-inset-top))] md:pt-0">
         <motion.div
           variants={sectionReveal}
           initial="initial"
@@ -430,20 +453,10 @@ function AutomationWithPlaybooks() {
           <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
 
           <div className="relative mt-5">
-            <button
-              aria-label="Previous"
-              onClick={() => scrollByCards(-1)}
-              className="hidden md:flex absolute left-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition"
-            >
-              ‹
-            </button>
-            <button
-              aria-label="Next"
-              onClick={() => scrollByCards(1)}
-              className="hidden md:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition"
-            >
-              ›
-            </button>
+            <button aria-label="Previous" onClick={() => scrollByCards(-1)}
+              className="hidden md:flex absolute left-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition">‹</button>
+            <button aria-label="Next" onClick={() => scrollByCards(1)}
+              className="hidden md:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 w-9 h-9 hover:bg-white/20 transition">›</button>
 
             <div
               ref={trackRef}
@@ -453,28 +466,15 @@ function AutomationWithPlaybooks() {
             >
               <div className="flex min-w-[640px] gap-4 pr-1">
                 {plays.map((p, i) => (
-                  <motion.div
-                    key={p.name}
-                    initial={{ y: 10, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.05 }}
-                    data-card
-                    className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur"
-                  >
+                  <motion.div key={p.name} initial={{ y: 10, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+                    data-card className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium">{p.name}</h3>
-                      <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">
-                        {p.time}
-                      </span>
+                      <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{p.time}</span>
                     </div>
                     <p className="mt-2 text-white/85">{p.result}</p>
-                    <a
-                      href="#contact"
-                      className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4"
-                    >
-                      See how it works →
-                    </a>
+                    <a href="#contact" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">See how it works →</a>
                   </motion.div>
                 ))}
               </div>
@@ -491,7 +491,7 @@ function AutomationWithPlaybooks() {
   );
 }
 
-/** Page 3: Process — responsive offsets to avoid snap jump / logo overlap on mobile */
+/** Page 3: Process — responsive offsets and mobile stats carousel */
 function ProcessPage() {
   const isMobile = useIsMobile();
 
@@ -506,7 +506,11 @@ function ProcessPage() {
   const statsOffset = isMobile ? PROCESS_STATS_OFFSET_MOBILE : PROCESS_STATS_OFFSET_DESKTOP;
 
   return (
-    <section id="process" data-theme="light" className="snap-start min-h-screen bg-white text-black flex items-center">
+    <section
+      id="process"
+      data-theme="light"
+      className="snap-start min-h-screen bg-white text-black flex items-center pt-[max(12px,env(safe-area-inset-top))] md:pt-0"
+    >
       <div className="mx-auto max-w-6xl px-6 w-full text-center">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/80">Process</p>
 
@@ -530,7 +534,7 @@ function ProcessPage() {
         </motion.div>
 
         <div className="flex justify-center" style={{ marginTop: statsOffset }}>
-          <DarkStatsRow />
+          <StatsRow mobileCarousel={isMobile} />
         </div>
       </div>
     </section>
@@ -567,7 +571,7 @@ function CommunityPage() {
   );
 }
 
-/** Page 5: Contact — bigger bottom padding on mobile; later footer trigger on mobile */
+/** Page 5: Contact — locks via snap-stop; footer won’t cover CTA on phones */
 function ContactPage({
   onInViewChange,
   visibilityAmount = 0.6,
@@ -591,7 +595,7 @@ function ContactPage({
       ref={ref}
       id="contact"
       data-theme="light"
-      className="snap-start min-h-screen bg-white text-black flex items-center pb-44 md:pb-28"
+      className="snap-start min-h-screen bg-white text-black flex items-center pb-[calc(env(safe-area-inset-bottom)+7rem)] md:pb-28 [scroll-snap-stop:always]"
     >
       <motion.div
         variants={sectionReveal}
@@ -635,10 +639,11 @@ export default function HomeClient() {
       <IntroOverlay show={introRunning} />
       <MotionLogo
         theme={theme}
-        startDelayMs={700}
-        moveMs={900}
-        startWidth={600}
-        dockWidthMobile={130}
+        startDelayMs={600}
+        moveMs={850}
+        startWidthMobile={300}
+        startWidthDesktop={600}
+        dockWidthMobile={120}
         dockWidthDesktop={240}
         dockTopMobile={10}
         dockTopDesktop={16}
@@ -653,16 +658,12 @@ export default function HomeClient() {
         {/* Footer appears later on mobile so it doesn't cover the CTA */}
         <ContactPage
           onInViewChange={(vis) => setShowFooter(vis)}
-          visibilityAmount={isMobile ? 0.85 : 0.5}
+          visibilityAmount={isMobile ? 0.95 : 0.55}
         />
       </main>
 
       {/* Footer shows on last page; hides when scrolling up */}
-      <div
-        className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-300 ${
-          showFooter ? "translate-y-0" : "translate-y-full"
-        }`}
-      >
+      <div className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-300 ${showFooter ? "translate-y-0" : "translate-y-full"}`}>
         <Footer />
       </div>
     </>
