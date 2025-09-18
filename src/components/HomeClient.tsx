@@ -1,91 +1,141 @@
 // src/components/HomeClient.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image, { type StaticImageData } from "next/image";
 
 import TypeCycle from "@/components/TypeCycle";
 import Section from "@/components/Section";
 import NavDots from "@/components/NavDots";
 import { useActiveTheme } from "@/components/useActiveTheme";
 
-// Keep your existing solid-background PNG next to this file
-import brand from "./logo.png";
+// Import your solid-background PNG placed next to this file (or in /public and adjust import)
+import brandPng from "./logo.png";
+
+/** Allow a window flag without using `any` */
+declare global {
+  interface Window {
+    __INTRO_DONE?: boolean;
+  }
+}
+
+type ThemeMode = "dark" | "light";
+
+type CTA = { label: string; href: string };
+type SectionData = {
+  id: string;
+  eyebrow?: string;
+  title: string;
+  body?: string;
+  cta?: CTA[];
+  invert?: boolean;
+};
 
 /**
  * KeyedLogo
- * - Converts the opaque PNG to transparent (chroma-keys near-white)
- * - Recolors strokes to white on dark sections, black on light sections
- * - Calls onReady once the processed image is available
- * - Renders NOTHING until processing is done (prevents the white flash)
+ * - Loads the opaque PNG, chroma-keys near-white to transparent,
+ * - Recolors remaining pixels to mono (white on dark, black on light),
+ * - Exposes a data: URL + intrinsic dimensions so we can render via next/image,
+ * - Calls onReady() when the processed image is ready.
  */
 function KeyedLogo({
   theme,
   onReady,
+  source,
 }: {
-  theme: "dark" | "light";
+  theme: ThemeMode;
   onReady?: () => void;
+  source: StaticImageData;
 }) {
-  const [src, setSrc] = useState<string | null>(null);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const img = new Image();
+
+    const img = new window.Image();
     img.decoding = "async";
-    img.src = (brand as any).src ?? (brand as unknown as string);
+    img.src = source.src;
 
     img.onload = () => {
       if (cancelled) return;
+
       const w = img.naturalWidth || img.width;
       const h = img.naturalHeight || img.height;
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext("2d");
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
       ctx.drawImage(img, 0, 0, w, h);
       const id = ctx.getImageData(0, 0, w, h);
       const data = id.data;
 
-      // Tune these thresholds as needed for your PNG:
-      const hardCut = 245; // >= → fully transparent
-      const softCut = 232; // >= → feather/partial alpha
+      // Thresholds for white knockout + feather (tweak if needed)
+      const hardCut = 245; // >= fully transparent
+      const softCut = 232; // >= feather/partial alpha
       const toWhite = theme === "dark";
+      const mono = toWhite ? 255 : 0;
 
       for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
 
         if (r >= hardCut && g >= hardCut && b >= hardCut) {
-          data[i + 3] = 0; // punch out full white
+          data[i + 3] = 0; // remove pure white bg
           continue;
         }
         if (r >= softCut && g >= softCut && b >= softCut) {
+          // feather edge alpha
           const avg = (r + g + b) / 3;
           const t = Math.min(1, Math.max(0, (hardCut - avg) / (hardCut - softCut)));
-          data[i + 3] = a * t; // feather edges
+          data[i + 3] = Math.round(a * t);
         }
 
-        // Recolor strokes to mono for contrast
-        const v = toWhite ? 255 : 0;
-        data[i] = v; data[i + 1] = v; data[i + 2] = v;
+        // recolor remaining strokes to mono contrast
+        data[i] = mono;
+        data[i + 1] = mono;
+        data[i + 2] = mono;
       }
 
       ctx.putImageData(id, 0, 0);
-      const url = c.toDataURL("image/png");
-      setSrc(url);
+      const url = canvas.toDataURL("image/png");
+
+      setDims({ w, h });
+      setDataUrl(url);
       onReady?.();
     };
 
-    return () => { cancelled = true; };
-  }, [theme, onReady]);
+    return () => {
+      cancelled = true;
+    };
+  }, [theme, onReady, source]);
 
-  if (!src) return null; // ← key line: don't render original PNG at all
-  return <img src={src} alt="Automate with Colin" className="h-auto w-full" />;
+  if (!dataUrl || !dims) return null;
+
+  // Render the generated image via next/image (unoptimized for data URLs)
+  return (
+    <Image
+      src={dataUrl}
+      alt="Automate with Colin"
+      width={dims.w}
+      height={dims.h}
+      priority
+      unoptimized
+      className="h-auto w-full select-none"
+    />
+  );
 }
 
-const sections = [
+const sections: SectionData[] = [
   {
     id: "mission",
     title: "Smarter Systems. Stronger Businesses.",
@@ -132,7 +182,7 @@ const sections = [
 function IntroOverlay({ show }: { show: boolean }) {
   return (
     <motion.div
-      className="fixed inset-0 bg-black z-[60]"
+      className="fixed inset-0 z-[60] bg-black"
       initial={{ opacity: 1 }}
       animate={{ opacity: show ? 1 : 0 }}
       transition={{ duration: 0.35 }}
@@ -150,7 +200,7 @@ function MotionLogo({
   dockWidthDesktop = 240,
   onDone,
 }: {
-  theme: "dark" | "light";
+  theme: ThemeMode;
   startDelayMs?: number;
   moveMs?: number;
   startWidth?: number;
@@ -158,15 +208,18 @@ function MotionLogo({
   dockWidthDesktop?: number;
   onDone?: () => void;
 }) {
-  const [logoReady, setLogoReady] = useState(false);
-  const [dock, setDock] = useState(false);
+  const [logoReady, setLogoReady] = useState<boolean>(false);
+  const [dock, setDock] = useState<boolean>(false);
 
-  // Start the timing ONLY after the processed logo is ready
+  // trigger the move after the keyed logo is ready
   useEffect(() => {
     if (!logoReady) return;
-    const t = setTimeout(() => setDock(true), startDelayMs);
-    const d = setTimeout(() => onDone?.(), startDelayMs + moveMs);
-    return () => { clearTimeout(t); clearTimeout(d); };
+    const t = window.setTimeout(() => setDock(true), startDelayMs);
+    const d = window.setTimeout(() => onDone?.(), startDelayMs + moveMs);
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(d);
+    };
   }, [logoReady, startDelayMs, moveMs, onDone]);
 
   const dockWidth =
@@ -189,8 +242,8 @@ function MotionLogo({
       animate={
         dock
           ? {
-              top: 16,           // TOP-LEFT dock
-              left: 16,
+              top: 16,
+              left: 16, // top-left dock; change to right by using { right: 16, left: "auto" }
               x: 0,
               y: 0,
               width: dockWidth,
@@ -199,22 +252,25 @@ function MotionLogo({
       }
       transition={{ duration: moveMs / 1000, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Only render the processed logo; when it's ready we begin the timeline */}
       <Link href="/" aria-label="Go to home">
-        <KeyedLogo theme={theme} onReady={() => setLogoReady(true)} />
+        <KeyedLogo
+          theme={theme}
+          source={brandPng}
+          onReady={() => setLogoReady(true)}
+        />
       </Link>
     </motion.div>
   );
 }
 
 export default function HomeClient() {
-  const ids = useMemo(() => ["hero", ...sections.map((s) => s.id)], []);
+  const ids = useMemo<string[]>(() => ["hero", ...sections.map((s) => s.id)], []);
   const theme = useActiveTheme(ids); // "dark" | "light"
-  const [introRunning, setIntroRunning] = useState(true);
+  const [introRunning, setIntroRunning] = useState<boolean>(true);
 
   return (
     <>
-      {/* App-like splash stays up until the slide finishes */}
+      {/* Splash overlay during the center→dock animation */}
       <IntroOverlay show={introRunning} />
 
       <MotionLogo
@@ -223,9 +279,9 @@ export default function HomeClient() {
         moveMs={900}
         startWidth={600}
         dockWidthMobile={170}
-        dockWidthDesktop={240}
+        dockWidthDesktop={260}
         onDone={() => {
-          (window as any).__INTRO_DONE = true;
+          window.__INTRO_DONE = true;
           setIntroRunning(false);
         }}
       />
@@ -236,39 +292,39 @@ export default function HomeClient() {
       <section
         id="hero"
         data-theme="dark"
-        className="h-screen snap-start grid place-items-center bg-black text-white"
+        className="grid h-screen place-items-center bg-black text-white snap-start"
       >
-        <div className="text-center px-6">
+        <div className="px-6 text-center">
           <div className="mb-2 text-xs uppercase tracking-[0.2em] opacity-70">
             Automate with Colin
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+          <h1 className="text-5xl font-bold leading-tight md:text-6xl">
             We Help You{" "}
             <TypeCycle
               words={["Automate", "Educate", "Elevate"]}
-              typingMs={110}
+              typingMs={110}  // slower per your request
               eraseMs={80}
               holdMs={1200}
               className="inline-flex"
-              highlightClassName="bg-white text-black px-2 rounded"
+              highlightClassName="rounded bg-white px-2 text-black"
             />
           </h1>
 
-          <p className="mt-4 text-lg opacity-80 max-w-2xl mx-auto">
+          <p className="mx-auto mt-4 max-w-2xl text-lg opacity-80">
             Expert guidance, hands-on learning, and real solutions—built to scale your business.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3">
             <a
               href="#services"
-              className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur hover:bg-white/20 active:scale-[.98] transition"
+              className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
             >
               Work With Us
             </a>
             <a
               href="https://skool.link/your-group"
-              className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur hover:bg-white/20 active:scale-[.98] transition"
+              className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
             >
               Join the Community
             </a>
@@ -276,6 +332,7 @@ export default function HomeClient() {
         </div>
       </section>
 
+      {/* Remaining sections */}
       {sections.map((s) => (
         <Section key={s.id} {...s} />
       ))}

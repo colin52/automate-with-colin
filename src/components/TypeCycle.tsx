@@ -1,54 +1,60 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  words?: string[];
-  typingMs?: number;   // per char
-  eraseMs?: number;    // per char
-  holdMs?: number;     // pause after type
+  words: string[];
+  typingMs?: number;
+  eraseMs?: number;
+  holdMs?: number;
   className?: string;
-  highlightClassName?: string; // style for the word (e.g., white highlight)
+  highlightClassName?: string;
 };
 
 export default function TypeCycle({
-  words = ["Automate", "Educate", "Elevate"],
-  typingMs = 70,
-  eraseMs = 45,
-  holdMs = 800,
-  className,
-  highlightClassName = "bg-white text-black px-1 rounded",
+  words,
+  typingMs = 80,
+  eraseMs = 50,
+  holdMs = 1000,
+  className = "",
+  highlightClassName = "",
 }: Props) {
-  const [idx, setIdx] = useState(0);
-  const [out, setOut] = useState("");
-  const [typing, setTyping] = useState(true);
+  const [index, setIndex] = useState<number>(0);
+  const [text, setText] = useState<string>("");
+  const [erasing, setErasing] = useState<boolean>(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    let timer: any;
-    const word = words[idx % words.length];
+    const word = words[index % words.length];
 
-    if (typing) {
-      if (out.length < word.length) {
-        timer = setTimeout(() => setOut(word.slice(0, out.length + 1)), typingMs);
+    function schedule(fn: () => void, ms: number) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(fn, ms);
+    }
+
+    if (!erasing) {
+      if (text.length < word.length) {
+        schedule(() => setText(word.slice(0, text.length + 1)), typingMs);
       } else {
-        timer = setTimeout(() => setTyping(false), holdMs);
+        schedule(() => setErasing(true), holdMs);
       }
     } else {
-      if (out.length > 0) {
-        timer = setTimeout(() => setOut(word.slice(0, out.length - 1)), eraseMs);
+      if (text.length > 0) {
+        schedule(() => setText(word.slice(0, text.length - 1)), eraseMs);
       } else {
-        setIdx((i) => (i + 1) % words.length);
-        setTyping(true);
+        setErasing(false);
+        setIndex((i) => (i + 1) % words.length);
       }
     }
 
-    return () => clearTimeout(timer);
-  }, [typing, out, idx, words, typingMs, eraseMs, holdMs]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [text, erasing, index, words, typingMs, eraseMs, holdMs]);
 
   return (
     <span className={className}>
-      <span className={highlightClassName}>{out || "\u00A0"}</span>
-      <span className="ml-0.5 inline-block h-6 w-[2px] animate-caret bg-white/80 align-[-2px]" />
+      <span className={highlightClassName}>{text}</span>
+      <span className="inline-block w-[1ch] animate-pulse select-none">|</span>
     </span>
   );
 }
