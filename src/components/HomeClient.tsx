@@ -330,7 +330,7 @@ function Hero() {
 function AutomationWithPlaybooksDesktop() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
-    { Icon: IconBot, title: "AI Sidekicks", blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, securely" },
+    { Icon: IconBot, title: "AI Sidekicks", blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, secure" },
     { Icon: IconCable, title: "Integrations", blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
     { Icon: IconCode, title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
   ];
@@ -476,7 +476,7 @@ function AutomationWithPlaybooksDesktop() {
 function AutomationMobile() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
-    { Icon: IconBot, title: "AI Sidekicks", blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, securely" },
+    { Icon: IconBot, title: "AI Sidekicks", blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, secure" },
     { Icon: IconCable, title: "Integrations", blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
     { Icon: IconCode, title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
   ];
