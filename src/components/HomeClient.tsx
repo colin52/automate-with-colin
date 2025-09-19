@@ -13,7 +13,7 @@ import NavDots from "@/components/NavDots";
 import { useActiveTheme } from "@/components/useActiveTheme";
 import Footer from "@/components/Footer";
 
-// Solid-background PNG next to this file (or put in /public and update path)
+// Solid-background PNG next to this file (or /public with path change)
 import brandPng from "./logo.png";
 
 type ThemeMode = "dark" | "light";
@@ -71,13 +71,13 @@ function KeyedLogo({
         const a = data[i + 3];
 
         if (r >= hardCut && g >= hardCut && b >= hardCut) {
-          data[i + 3] = 0; // fully transparent
+          data[i + 3] = 0;
           continue;
         }
         if (r >= softCut && g >= softCut && b >= softCut) {
           const avg = (r + g + b) / 3;
           const t = Math.min(1, Math.max(0, (hardCut - avg) / (hardCut - softCut)));
-          data[i + 3] = Math.round(a * t); // feather
+          data[i + 3] = Math.round(a * t);
         }
 
         data[i] = mono;
@@ -168,7 +168,7 @@ function FeatureGrid() {
   ];
 
   return (
-    <section id="capabilities" data-theme="light" className="bg-white text-black">
+    <section id="capabilities" data-theme="light" className="bg-white text-black snap-start">
       <div className="mx-auto max-w-6xl px-6 pt-10 md:pt-14">
         {/* Tagline + CTAs */}
         <div className="text-center">
@@ -183,10 +183,10 @@ function FeatureGrid() {
 
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
-              href="#playbooks"
+              href="#contact"
               className="rounded-full border border-black/15 bg-black text-white px-5 py-2 text-sm font-medium hover:bg-black/90 active:scale-[.99]"
             >
-              Work With Us
+              Get in Touch
             </a>
             <a
               href="#community"
@@ -204,13 +204,9 @@ function FeatureGrid() {
           </p>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {items.map(({ icon: Icon, title, blurb, pill }, i) => (
-              <motion.div
+            {items.map(({ icon: Icon, title, blurb, pill }) => (
+              <div
                 key={title}
-                initial={{ y: 12, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
-                transition={{ delay: i * 0.05, duration: 0.35 }}
                 className="rounded-2xl border border-black/12 p-6 shadow-[0_2px_24px_rgba(0,0,0,0.05)] bg-white"
               >
                 <div className="flex items-start gap-4">
@@ -227,12 +223,12 @@ function FeatureGrid() {
                     <p className="mt-1 text-black/75">{blurb}</p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Give a little space at the bottom so the last card isn't glued to the fold */}
+        {/* spacing so last card isn't glued to the fold */}
         <div className="h-12 md:h-16" />
       </div>
     </section>
@@ -242,14 +238,25 @@ function FeatureGrid() {
 /* ------------------------------ Page 2 (black) ----------------------------- */
 function PlaybooksCarousel() {
   const plays = [
-    { name: "Missed-Call SMS Bot",   time: "Deploy in a week", result: "Captures 20–40% lost leads" },
-    { name: "Invoice → Journal Entry", time: "Deploy in days",  result: "Touchless accounting handoffs" },
-    { name: "Contract Generator",    time: "Deploy in a week",  result: "One-click Word→PDF→Sign" },
-    { name: "Field Tech Scheduler",  time: "Deploy in 2 weeks", result: "Balanced load, fewer no-shows" },
-    { name: "Lead Router",           time: "Deploy in days",    result: "Speed-to-lead done right" },
+    { name: "Missed-Call SMS Bot",     time: "Deploy in a week", result: "Captures 20–40% lost leads" },
+    { name: "Invoice → Journal Entry", time: "Deploy in days",   result: "Touchless accounting handoffs" },
+    { name: "Contract Generator",      time: "Deploy in a week", result: "One-click Word→PDF→Sign" },
+    { name: "Field Tech Scheduler",    time: "Deploy in 2 weeks", result: "Balanced load, fewer no-shows" },
+    { name: "Lead Router",             time: "Deploy in days",   result: "Speed-to-lead done right" },
   ];
 
   const trackRef = useRef<HTMLDivElement>(null);
+
+  // Always start fully left & ensure it renders immediately
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    // tiny delay lets layout settle before forcing scroll
+    const id = window.setTimeout(() => {
+      el.scrollTo({ left: 0, behavior: "auto" });
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const scrollByCards = (dir: 1 | -1) => {
     const el = trackRef.current;
@@ -260,8 +267,12 @@ function PlaybooksCarousel() {
   };
 
   return (
-    <section id="playbooks" data-theme="dark" className="bg-black text-white">
-      <div className="mx-auto max-w-6xl px-6 pt-12 pb-14">
+    <section
+      id="playbooks"
+      data-theme="dark"
+      className="bg-black text-white snap-start overscroll-contain"
+    >
+      <div className="mx-auto max-w-6xl px-6 pt-10 pb-14 md:pt-12">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/70">Templates & Playbooks</p>
         <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
 
@@ -284,16 +295,12 @@ function PlaybooksCarousel() {
 
           <div
             ref={trackRef}
-            className="no-scrollbar overflow-x-auto scroll-smooth"
+            className="no-scrollbar overflow-x-auto scroll-smooth min-w-0 w-full"
           >
-            <div className="flex min-w-[640px] gap-4 pr-1">
-              {plays.map((p, i) => (
-                <motion.div
+            <div className="flex w-max gap-4 pr-1">
+              {plays.map((p) => (
+                <div
                   key={p.name}
-                  initial={{ y: 10, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
                   data-card
                   className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur"
                 >
@@ -310,7 +317,7 @@ function PlaybooksCarousel() {
                   >
                     See how it works →
                   </a>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -335,7 +342,7 @@ function StatsStrip() {
     { k: "Avg ROI (12 mo)", v: "3.7×" },
   ];
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-6 pt-6 md:pt-8 pb-8 md:pb-10 md:grid-cols-4">
+    <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-6 pt-4 md:pt-8 pb-8 md:pb-10 md:grid-cols-4">
       {stats.map((s) => (
         <div key={s.k} className="rounded-2xl border border-black/15 p-5 text-center">
           <div className="text-2xl font-semibold">{s.v}</div>
@@ -353,7 +360,7 @@ function ProcessStrip() {
     { k: "Uplift", d: "Measure, train, hand off." },
   ];
   return (
-    <div className="mx-auto max-w-6xl px-6 pt-0 pb-14">
+    <div className="mx-auto max-w-6xl px-6 pt-2 pb-14 md:pt-0">
       <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/80">Process</p>
       <div className="grid gap-4 md:grid-cols-4">
         {steps.map((s, i) => (
@@ -361,7 +368,7 @@ function ProcessStrip() {
             key={s.k}
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.2 }}
             transition={{ delay: i * 0.05 }}
             className="rounded-2xl border border-black/12 p-5"
           >
@@ -376,7 +383,7 @@ function ProcessStrip() {
 }
 function PageThreeAllWhite() {
   return (
-    <section id="page-three" data-theme="light" className="bg-white text-black">
+    <section id="page-three" data-theme="light" className="bg-white text-black snap-start">
       <StatsStrip />
       <ProcessStrip />
     </section>
@@ -386,8 +393,8 @@ function PageThreeAllWhite() {
 /* ------------------------------ Community (white) -------------------------- */
 function Community() {
   return (
-    <section id="community" data-theme="light" className="bg-white text-black">
-      <div className="mx-auto max-w-6xl px-6 pt-8 pb-18 md:pt-10 md:pb-20">
+    <section id="community" data-theme="light" className="bg-white text-black snap-start">
+      <div className="mx-auto max-w-6xl px-6 pt-6 pb-16 md:pt-10 md:pb-20">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/70">Community</p>
         <h2 className="text-3xl font-semibold">Build with us, not alone</h2>
         <p className="mt-3 max-w-2xl text-black/80">
@@ -416,7 +423,14 @@ function Community() {
 
 /* ---------------------------------- Page ---------------------------------- */
 export default function HomeClient() {
-  // Final contact (uses your Section component)
+  // Always start at top; prevents browsers restoring weird scroll (helps gallery too)
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   const sections: SectionData[] = [
     {
       id: "contact",
@@ -438,24 +452,17 @@ export default function HomeClient() {
     <>
       <ScrollProgressBar />
 
-      {/* Sticky header with hard-refresh on logo click */}
+      {/* Sticky header; logo uses Link to satisfy Next lint */}
       <header
-        className={`sticky top-0 z-40 border-b ${
+        className={`sticky top-0 z-40 border ${
           theme === "dark" ? "border-white/10 bg-black/60" : "border-black/10 bg-white/70"
         } backdrop-blur`}
       >
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2">
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              if (typeof window !== "undefined") window.location.assign("/");
-            }}
-            className="block w-[160px] md:w-[200px]"
-            aria-label="Go to homepage"
-          >
+          <Link href="/" className="block w-[160px] md:w-[200px]" aria-label="Go to homepage" prefetch={false} onClick={() => location.assign("/")}>
+            {/* Hard-refresh still occurs via onClick; Link satisfies ESLint */}
             <KeyedLogo theme={theme} source={brandPng} />
-          </a>
+          </Link>
           <nav className="ml-auto hidden gap-5 text-sm md:flex">
             <a href="#capabilities" className="opacity-80 hover:opacity-100">What we build</a>
             <a href="#playbooks" className="opacity-80 hover:opacity-100">Playbooks</a>
@@ -466,29 +473,34 @@ export default function HomeClient() {
         </div>
       </header>
 
-      <NavDots ids={ids} />
+      {/* Mobile snap container (not mandatory) + no horizontal bleed */}
+      <main className="overflow-x-hidden snap-y snap-proximity md:snap-none">
+        <NavDots ids={ids} />
 
-      {/* Page 1 */}
-      <FeatureGrid />
+        {/* Page 1 */}
+        <FeatureGrid />
 
-      {/* Page 2 */}
-      <PlaybooksCarousel />
+        {/* Page 2 */}
+        <PlaybooksCarousel />
 
-      {/* Page 3 */}
-      <PageThreeAllWhite />
+        {/* Page 3 */}
+        <PageThreeAllWhite />
 
-      {/* More content */}
-      <Community />
+        {/* Community */}
+        <Community />
 
-      {/* Contact */}
-      {sections.map((s) => (
-        <Section key={s.id} {...s} />
-      ))}
+        {/* Contact (extra bottom padding so footer never overlaps on mobile) */}
+        {sections.map((s) => (
+          <div key={s.id} id={s.id} className="snap-start">
+            <Section {...s} />
+          </div>
+        ))}
 
-      {/* Spacer so footer never overlaps contact */}
-      <div className="h-10 md:h-14" />
-
-      <Footer />
+        {/* Footer integrated right after contact */}
+        <div className="pt-2 pb-24 md:pb-8">
+          <Footer />
+        </div>
+      </main>
     </>
   );
 }
