@@ -1,17 +1,17 @@
+// src/components/HomeClient.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useSpring, type Variants } from "framer-motion";
 import Image, { type StaticImageData } from "next/image";
-import Link from "next/link";                 // NEW
-import { useRouter } from "next/navigation";  // NEW
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import TypeCycle from "@/components/TypeCycle";
 import Footer from "@/components/Footer";
 import brandPng from "./logo.png";
 
 /* ======================== TWEAKABLE CONSTANTS ======================== */
-/** Desktop-only stat bubbles (under Process) */
 const STATS_PROCESS_DESKTOP = [
   { k: "Hours Saved", v: "12,000+" },
   { k: "Systems Shipped", v: "120+" },
@@ -19,7 +19,6 @@ const STATS_PROCESS_DESKTOP = [
   { k: "Avg ROI (12 mo)", v: "3.7×" },
 ];
 
-/** Community page stat bubbles (white variant, good for both viewports) */
 const STATS_COMMUNITY = [
   { v: "80+", k: "Workshops & AMAs" },
   { v: "1,500+", k: "Builders" },
@@ -27,7 +26,6 @@ const STATS_COMMUNITY = [
   { v: "4.9★", k: "Avg. Feedback" },
 ];
 
-/** Logo intro animation sizing */
 const LOGO = {
   startWidthMobile: 160,
   startWidthDesktop: 520,
@@ -53,14 +51,12 @@ function useIsMobile(bp = 768) {
   return isMobile;
 }
 
-/* ---------------- Scroll progress ---------------- */
 function ScrollProgressBar() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 20, mass: 0.2 });
   return <motion.div style={{ scaleX }} className="fixed left-0 top-0 z-[80] h-[2px] w-full origin-left bg-white/70" />;
 }
 
-/* ---------------- Theme by visible section ---------------- */
 function useSectionTheme() {
   const [theme, setTheme] = useState<ThemeMode>("dark");
   useEffect(() => {
@@ -82,7 +78,6 @@ function useSectionTheme() {
   return theme;
 }
 
-/* ---------------- Intro overlay + logo ---------------- */
 function IntroOverlay({ show }: { show: boolean }) {
   return (
     <motion.div
@@ -148,7 +143,7 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
   const [logoReady, setLogoReady] = useState(false);
   const [dock, setDock] = useState(false);
   const isMobile = useIsMobile();
-  const router = useRouter(); // NEW
+  const router = useRouter();
 
   useEffect(() => {
     if (!logoReady) return;
@@ -169,15 +164,16 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
       animate={dock ? { top: dockTop, left: 16, x: 0, y: 0, width: dockWidth } : undefined}
       transition={{ duration: LOGO.moveMs / 1000, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
     >
-      {/* Use Next Link + programmatic refresh to satisfy ESLint and still “reload” */}
       <Link
         href="/"
-        prefetch={false}
         aria-label="Go to home"
+        prefetch={false}
         onClick={(e) => {
           e.preventDefault();
-          router.replace("/");   // navigate home
-          router.refresh();      // force data/UI refresh
+          // Hard reload so all state (snap positions, springs, etc.) reset
+          window.location.assign("/");
+          // Fallback for SPA nav if browser blocks assign
+          router.replace("/");
         }}
       >
         <KeyedLogo theme={theme} source={brandPng} onReady={() => setLogoReady(true)} />
@@ -193,10 +189,7 @@ const sectionReveal: Variants = {
 };
 
 function StatsRow({
-  items,
-  variant,
-  mobileCarousel,
-  className = "",
+  items, variant, mobileCarousel, className = "",
 }: {
   items: { v: string; k: string }[];
   variant: "dark" | "light";
@@ -222,7 +215,7 @@ function StatsRow({
   }
 
   return (
-    <div className={`grid gap-6 sm:grid-cols-2 lg:grid-cols-4 justify-center ${className}`}>
+    <div className={`grid gap-5 sm:grid-cols-2 lg:grid-cols-4 justify-center ${className}`}>
       {items.map((s) => (
         <div key={s.k} className={`rounded-2xl border p-5 text-center ${base}`}>
           <div className="text-2xl font-semibold">{s.v}</div>
@@ -235,6 +228,7 @@ function StatsRow({
 
 /* ---------------- Sections ---------------- */
 function Hero() {
+  const isMobile = useIsMobile();
   return (
     <section id="hero" data-theme="dark" className="snap-start min-h-screen bg-black text-white flex items-center [scroll-snap-stop:always]">
       <motion.div
@@ -244,14 +238,14 @@ function Hero() {
         viewport={{ once: true, amount: 0.6 }}
         className="mx-auto max-w-6xl px-6 w-full text-center"
       >
-        <h1 className="font-bold leading-tight md:text-6xl text-[clamp(1.1rem,5.8vw,2.6rem)] whitespace-nowrap md:whitespace-normal">
-          Smarter Systems. Stronger Businesses.
+        <h1 className="font-bold leading-tight md:text-7xl text-[clamp(1.4rem,7vw,3rem)]">
+          Smarter Systems.
+          <br />
+          Stronger Businesses.
         </h1>
 
         <h2 className="mt-4 text-2xl md:text-3xl">
-          We Help You
-          <br className="md:hidden" />
-          <span className="hidden md:inline">&nbsp;</span>
+          We Help You{" "}
           <TypeCycle
             words={["Automate", "Augment with AI", "Elevate", "Educate"]}
             typingMs={110}
@@ -265,12 +259,27 @@ function Hero() {
         <p className="mx-auto mt-5 max-w-2xl text-lg opacity-85">
           Automate the grind, and add AI where it actually pays.
         </p>
+
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <a
+            href={isMobile ? "#automation" : "#automation-desktop"}
+            className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
+          >
+            Work With Us
+          </a>
+          <a
+            href="#community"
+            className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
+          >
+            Learn to Automate
+          </a>
+        </div>
       </motion.div>
     </section>
   );
 }
 
-/** Automation + Playbooks (combined for DESKTOP), split pages for MOBILE */
+/** Desktop combined page: exact 2-row grid; each half centers content */
 function AutomationWithPlaybooksDesktop() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
@@ -288,6 +297,10 @@ function AutomationWithPlaybooksDesktop() {
   ];
 
   const trackRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    trackRef.current?.scrollTo({ left: 0, behavior: "auto" });
+  }, []);
+
   const scrollByCards = (dir: 1 | -1) => {
     const el = trackRef.current; if (!el) return;
     const card = el.querySelector<HTMLElement>("[data-card]");
@@ -296,16 +309,16 @@ function AutomationWithPlaybooksDesktop() {
   };
 
   return (
-    <section id="automation-desktop" data-theme="light" className="hidden md:grid snap-start min-h-screen grid-rows-[3fr_2fr] [scroll-snap-stop:always]">
-      {/* Top (white) */}
+    <section id="automation-desktop" data-theme="light" className="hidden md:grid snap-start min-h-screen grid-rows-2 [scroll-snap-stop:always]">
+      {/* Row 1 (white) */}
       <div className="bg-white text-black flex items-center">
         <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.55 }} className="mx-auto max-w-6xl px-6 w-full">
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
           <h2 className="text-3xl font-semibold">Automation with AI at the core</h2>
 
-          <div className="mt-8 grid gap-6 grid-cols-2">
+          <div className="mt-7 grid gap-5 grid-cols-2 auto-rows-fr">
             {items.map(({ Icon, title, blurb, pill }, i) => (
-              <motion.div key={title} initial={{ y: 12, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, margin: "-10% 0px -10% 0px" }} transition={{ delay: i * 0.05, duration: 0.35 }} className="rounded-2xl border border-black/12 p-6 shadow-[0_2px_24px_rgba(0,0,0,0.05)] bg-white">
+              <motion.div key={title} initial={{ y: 12, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, margin: "-10% 0px -10% 0px" }} transition={{ delay: i * 0.05, duration: 0.35 }} className="rounded-2xl border border-black/12 p-6 shadow-[0_2px_24px_rgba(0,0,0,0.05)] bg-white flex">
                 <div className="flex items-start gap-4">
                   <div className="rounded-xl border border-black/15 p-3 text-black"><Icon className="h-6 w-6" /></div>
                   <div className="flex-1">
@@ -322,7 +335,7 @@ function AutomationWithPlaybooksDesktop() {
         </motion.div>
       </div>
 
-      {/* Bottom (black) */}
+      {/* Row 2 (black) */}
       <div className="bg-black text-white flex items-center">
         <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.55 }} className="mx-auto max-w-6xl px-6 w-full">
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/70">Templates & Playbooks</p>
@@ -358,7 +371,7 @@ function AutomationWithPlaybooksDesktop() {
   );
 }
 
-/* --- MOBILE versions of the previous section: split into two pages --- */
+/* Mobile split pages */
 function AutomationMobile() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
@@ -404,6 +417,10 @@ function PlaybooksMobile() {
   ];
 
   const trackRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    trackRef.current?.scrollTo({ left: 0, behavior: "auto" });
+  }, []);
+
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   useEffect(() => {
     const el = trackRef.current; if (!el) return;
@@ -448,7 +465,6 @@ function PlaybooksMobile() {
   );
 }
 
-/** Process (white) — desktop shows black stat bubbles underneath; mobile hides them */
 function ProcessPage() {
   const isMobile = useIsMobile();
   const steps = [
@@ -458,7 +474,7 @@ function ProcessPage() {
     { k: "Uplift", d: "Measure, train, hand off." },
   ];
   return (
-    <section id="process" data-theme="light" className="snap-start min-h-screen bg-white text-black flex items-center pt-24 md:pt-0 [scroll-snap-stop:always]">
+    <section id="process" data-theme="light" className="snap-start min-h-screen bg-white text-black flex items-center md:py-6 [scroll-snap-stop:always]">
       <div className="mx-auto max-w-6xl px-6 w-full text-center">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/80">Process</p>
 
@@ -472,14 +488,9 @@ function ProcessPage() {
           ))}
         </motion.div>
 
-        {/* Desktop-only black bubbles under Process */}
         {!isMobile && (
-          <div className="mt-12">
-            <StatsRow
-              items={STATS_PROCESS_DESKTOP.map(({ v, k }) => ({ v, k }))}
-              variant="dark"
-              mobileCarousel={false}
-            />
+          <div className="mt-10">
+            <StatsRow items={STATS_PROCESS_DESKTOP.map(({ v, k }) => ({ v, k }))} variant="dark" />
           </div>
         )}
       </div>
@@ -487,11 +498,10 @@ function ProcessPage() {
   );
 }
 
-/** Community (black) — white stats under it (swipeable on mobile) */
 function CommunityPage() {
   const isMobile = useIsMobile();
   return (
-    <section id="community" data-theme="dark" className="snap-start min-h-screen bg-black text-white flex items-center pt-24 md:pt-0 [scroll-snap-stop:always]">
+    <section id="community" data-theme="dark" className="snap-start min-h-screen bg-black text-white flex items-center md:py-4 pt-24 md:pt-0 [scroll-snap-stop:always]">
       <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.6 }} className="mx-auto max-w-6xl px-6 w-full text-center">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/70">Community</p>
         <h2 className="text-3xl font-semibold">Build with us, not alone</h2>
@@ -505,7 +515,7 @@ function CommunityPage() {
           </a>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-8">
           <StatsRow items={STATS_COMMUNITY} variant="light" mobileCarousel={isMobile} />
         </div>
       </motion.div>
@@ -513,7 +523,6 @@ function CommunityPage() {
   );
 }
 
-/** Contact — snap-stop lock; footer reveal reliable on mobile */
 function ContactPage({ onInViewChange, visibilityAmount = 0.8 }: { onInViewChange?: (v: boolean) => void; visibilityAmount?: number; }) {
   const ref = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -524,8 +533,13 @@ function ContactPage({ onInViewChange, visibilityAmount = 0.8 }: { onInViewChang
   }, [onInViewChange, visibilityAmount]);
 
   return (
-    <section ref={ref} id="contact" data-theme="light" className="snap-start min-h-screen bg-white text-black flex items-center pb-[calc(env(safe-area-inset-bottom)+7rem)] md:pb-28 pt-24 md:pt-0 [scroll-snap-stop:always]">
-      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.6 }} className="mx-auto max-w-6xl px-6 w-full text-center">
+    <section
+      ref={ref}
+      id="contact"
+      data-theme="light"
+      className="snap-start min-h-screen bg-white text-black flex items-center pt-20 md:pt-2 pb-[calc(env(safe-area-inset-bottom)+10rem)] md:pb-40 [scroll-snap-stop:always]"
+    >
+      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.6 }} className="mx-auto max-w-6xl px-6 w-full text-center relative z-10">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/70">Contact</p>
         <h2 className="text-3xl font-semibold">Talk to Colin</h2>
         <p className="mt-3 max-w-2xl mx-auto text-black/80">
@@ -572,9 +586,7 @@ export default function HomeClient() {
 
       <main className="h-screen overflow-y-auto snap-y snap-mandatory scroll-smooth">
         <Hero />
-        {/* Desktop combined page */}
         <AutomationWithPlaybooksDesktop />
-        {/* Mobile split pages */}
         <AutomationMobile />
         <PlaybooksMobile />
         <ProcessPage />
