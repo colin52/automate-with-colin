@@ -37,7 +37,7 @@ const LOGO = {
   moveMs: 760,
 };
 
-const MOBILE_LOGO_RESERVED = 76; // px of space under the fixed logo on mobile
+const MOBILE_LOGO_RESERVED = 92; // px of space under the fixed logo on mobile
 /* ==================================================================== */
 
 type ThemeMode = "dark" | "light";
