@@ -158,7 +158,7 @@ function IconCode(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-/* ------------------------------ Page 1 (white) ----------------------------- */
+/* --------------------------- Section 1 (white) ----------------------------- */
 function FeatureGrid() {
   const items = [
     { icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
@@ -168,8 +168,12 @@ function FeatureGrid() {
   ];
 
   return (
-    <section id="capabilities" data-theme="light" className="bg-white text-black snap-start">
-      <div className="mx-auto max-w-6xl px-6 pt-10 md:pt-14">
+    <section
+      id="capabilities"
+      data-theme="light"
+      className="bg-white text-black snap-start min-h-[100svh] overflow-x-hidden"
+    >
+      <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col px-6 pt-8 md:pt-14">
         {/* Tagline + CTAs */}
         <div className="text-center">
           <h1 className="font-bold leading-tight">
@@ -198,7 +202,7 @@ function FeatureGrid() {
         </div>
 
         {/* What we build */}
-        <div className="mt-10 md:mt-12">
+        <div className="mt-8 md:mt-12">
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/80 text-center md:text-left">
             What We Build
           </p>
@@ -228,30 +232,29 @@ function FeatureGrid() {
           </div>
         </div>
 
-        {/* spacing so last card isn't glued to the fold */}
-        <div className="h-12 md:h-16" />
+        {/* Spacer to feel breathable on mobile */}
+        <div className="h-10 md:h-16" />
       </div>
     </section>
   );
 }
 
-/* ------------------------------ Page 2 (black) ----------------------------- */
+/* --------------------------- Section 2 (black) ----------------------------- */
 function PlaybooksCarousel() {
   const plays = [
-    { name: "Missed-Call SMS Bot",     time: "Deploy in a week", result: "Captures 20–40% lost leads" },
-    { name: "Invoice → Journal Entry", time: "Deploy in days",   result: "Touchless accounting handoffs" },
-    { name: "Contract Generator",      time: "Deploy in a week", result: "One-click Word→PDF→Sign" },
-    { name: "Field Tech Scheduler",    time: "Deploy in 2 weeks", result: "Balanced load, fewer no-shows" },
-    { name: "Lead Router",             time: "Deploy in days",   result: "Speed-to-lead done right" },
+    { name: "Missed-Call SMS Bot",     time: "Deploy in a week",  result: "Captures 20–40% lost leads" },
+    { name: "Invoice → Journal Entry", time: "Deploy in days",     result: "Touchless accounting handoffs" },
+    { name: "Contract Generator",      time: "Deploy in a week",   result: "One-click Word→PDF→Sign" },
+    { name: "Field Tech Scheduler",    time: "Deploy in 2 weeks",  result: "Balanced load, fewer no-shows" },
+    { name: "Lead Router",             time: "Deploy in days",     result: "Speed-to-lead done right" },
   ];
 
   const trackRef = useRef<HTMLDivElement>(null);
 
-  // Always start fully left & ensure it renders immediately
+  // Always start fully left & ensure immediate render
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    // tiny delay lets layout settle before forcing scroll
     const id = window.setTimeout(() => {
       el.scrollTo({ left: 0, behavior: "auto" });
     }, 0);
@@ -270,9 +273,9 @@ function PlaybooksCarousel() {
     <section
       id="playbooks"
       data-theme="dark"
-      className="bg-black text-white snap-start overscroll-contain"
+      className="bg-black text-white snap-start min-h-[100svh] overflow-x-hidden"
     >
-      <div className="mx-auto max-w-6xl px-6 pt-10 pb-14 md:pt-12">
+      <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col px-6 pt-8 md:pt-12 pb-12">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/70">Templates & Playbooks</p>
         <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
 
@@ -322,6 +325,9 @@ function PlaybooksCarousel() {
             </div>
           </div>
         </div>
+
+        {/* Spacer so it feels complete as a full page */}
+        <div className="mt-auto h-6" />
       </div>
 
       {/* hide native scrollbar */}
@@ -333,7 +339,7 @@ function PlaybooksCarousel() {
   );
 }
 
-/* ------------------------------ Page 3 (white) ----------------------------- */
+/* --------------------------- Section 3 (white) ----------------------------- */
 function StatsStrip() {
   const stats = [
     { k: "Hours Saved", v: "12,000+" },
@@ -383,39 +389,54 @@ function ProcessStrip() {
 }
 function PageThreeAllWhite() {
   return (
-    <section id="page-three" data-theme="light" className="bg-white text-black snap-start">
-      <StatsStrip />
-      <ProcessStrip />
+    <section
+      id="page-three"
+      data-theme="light"
+      className="bg-white text-black snap-start min-h-[100svh] overflow-x-hidden"
+    >
+      <div className="flex min-h-[100svh] flex-col">
+        <StatsStrip />
+        <ProcessStrip />
+        <div className="mt-auto h-6" />
+      </div>
     </section>
   );
 }
 
-/* ------------------------------ Community (white) -------------------------- */
+/* --------------------------- Section 4 (white) ----------------------------- */
 function Community() {
   return (
-    <section id="community" data-theme="light" className="bg-white text-black snap-start">
-      <div className="mx-auto max-w-6xl px-6 pt-6 pb-16 md:pt-10 md:pb-20">
-        <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/70">Community</p>
-        <h2 className="text-3xl font-semibold">Build with us, not alone</h2>
-        <p className="mt-3 max-w-2xl text-black/80">
-          Workshops, templates, office hours, and a community of builders swapping real-world playbooks.
-          Learn what actually works, ship faster, and get unstuck with feedback.
-        </p>
+    <section
+      id="community"
+      data-theme="light"
+      className="bg-white text-black snap-start min-h-[100svh] overflow-x-hidden"
+    >
+      <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col px-6 pt-6 md:pt-10 pb-16 md:pb-20">
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/70">Community</p>
+          <h2 className="text-3xl font-semibold">Build with us, not alone</h2>
+          <p className="mt-3 max-w-2xl text-black/80">
+            Workshops, templates, office hours, and a community of builders swapping real-world playbooks.
+            Learn what actually works, ship faster, and get unstuck with feedback.
+          </p>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <a
-            href="https://skool.link/your-group"
-            className="rounded-full border border-black/15 bg-black/5 px-5 py-2 text-sm font-medium hover:bg-black/10 transition"
-          >
-            Join the Community
-          </a>
-          <a
-            href="#contact"
-            className="rounded-full border border-black/15 bg-black/5 px-5 py-2 text-sm font-medium hover:bg-black/10 transition"
-          >
-            Ask About Coaching
-          </a>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a
+              href="https://skool.link/your-group"
+              className="rounded-full border border-black/15 bg-black/5 px-5 py-2 text-sm font-medium hover:bg-black/10 transition"
+            >
+              Join the Community
+            </a>
+            <a
+              href="#contact"
+              className="rounded-full border border-black/15 bg-black/5 px-5 py-2 text-sm font-medium hover:bg-black/10 transition"
+            >
+              Ask About Coaching
+            </a>
+          </div>
         </div>
+
+        <div className="mt-auto h-6" />
       </div>
     </section>
   );
@@ -423,7 +444,7 @@ function Community() {
 
 /* ---------------------------------- Page ---------------------------------- */
 export default function HomeClient() {
-  // Always start at top; prevents browsers restoring weird scroll (helps gallery too)
+  // Start at top (prevents browser restoring odd positions that break snap)
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -452,54 +473,54 @@ export default function HomeClient() {
     <>
       <ScrollProgressBar />
 
-      {/* Sticky header; logo uses Link to satisfy Next lint */}
-      <header
-        className={`sticky top-0 z-40 border ${
-          theme === "dark" ? "border-white/10 bg-black/60" : "border-black/10 bg-white/70"
-        } backdrop-blur`}
-      >
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2">
-          <Link href="/" className="block w-[160px] md:w-[200px]" aria-label="Go to homepage" prefetch={false} onClick={() => location.assign("/")}>
-            {/* Hard-refresh still occurs via onClick; Link satisfies ESLint */}
-            <KeyedLogo theme={theme} source={brandPng} />
-          </Link>
-          <nav className="ml-auto hidden gap-5 text-sm md:flex">
-            <a href="#capabilities" className="opacity-80 hover:opacity-100">What we build</a>
-            <a href="#playbooks" className="opacity-80 hover:opacity-100">Playbooks</a>
-            <a href="#page-three" className="opacity-80 hover:opacity-100">Process</a>
-            <a href="#community" className="opacity-80 hover:opacity-100">Community</a>
-            <a href="#contact" className="opacity-80 hover:opacity-100">Contact</a>
-          </nav>
-        </div>
-      </header>
+      {/* Mobile = section snap; Desktop = normal flow */}
+      <main className="overflow-x-hidden md:overflow-visible md:h-auto h-[100svh] md:snap-none snap-y snap-proximity">
+        {/* Sticky header INSIDE the scroll container so it sticks while main scrolls */}
+        <header
+          className={`sticky top-0 z-40 border ${
+            theme === "dark" ? "border-white/10 bg-black/60" : "border-black/10 bg-white/70"
+          } backdrop-blur`}
+        >
+          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2">
+            <Link
+              href="/"
+              className="block w-[160px] md:w-[200px]"
+              aria-label="Go to homepage"
+              prefetch={false}
+              onClick={() => location.assign("/")}
+            >
+              <KeyedLogo theme={theme} source={brandPng} />
+            </Link>
 
-      {/* Mobile snap container (not mandatory) + no horizontal bleed */}
-      <main className="overflow-x-hidden snap-y snap-proximity md:snap-none">
+            <nav className="ml-auto hidden gap-5 text-sm md:flex">
+              <a href="#capabilities" className="opacity-80 hover:opacity-100">What we build</a>
+              <a href="#playbooks" className="opacity-80 hover:opacity-100">Playbooks</a>
+              <a href="#page-three" className="opacity-80 hover:opacity-100">Process</a>
+              <a href="#community" className="opacity-80 hover:opacity-100">Community</a>
+              <a href="#contact" className="opacity-80 hover:opacity-100">Contact</a>
+            </nav>
+          </div>
+        </header>
+
+        {/* Dots (position fixed; safe with inner scroll container) */}
         <NavDots ids={ids} />
 
-        {/* Page 1 */}
+        {/* Mobile: each section is its own "page" with snap-start */}
         <FeatureGrid />
-
-        {/* Page 2 */}
         <PlaybooksCarousel />
-
-        {/* Page 3 */}
         <PageThreeAllWhite />
-
-        {/* Community */}
         <Community />
 
-        {/* Contact (extra bottom padding so footer never overlaps on mobile) */}
-        {sections.map((s) => (
-          <div key={s.id} id={s.id} className="snap-start">
-            <Section {...s} />
+        {/* Contact (as a final full-screen section) */}
+        <section id="contact" className="snap-start min-h-[100svh] bg-black text-white overflow-x-hidden">
+          <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col px-6 pt-8 md:pt-12 pb-24 md:pb-16">
+            <Section {...sections[0]} />
+            {/* Integrated footer right below so nothing overlaps on mobile */}
+            <div className="mt-auto pt-4">
+              <Footer />
+            </div>
           </div>
-        ))}
-
-        {/* Footer integrated right after contact */}
-        <div className="pt-2 pb-24 md:pb-8">
-          <Footer />
-        </div>
+        </section>
       </main>
     </>
   );
