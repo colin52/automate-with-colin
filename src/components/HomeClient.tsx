@@ -27,15 +27,17 @@ const STATS_COMMUNITY = [
 ];
 
 const LOGO = {
-  startWidthMobile: 160,
+  startWidthMobile: 120, // smaller on mobile so first-load feels right
   startWidthDesktop: 520,
   dockWidthMobile: 110,
   dockWidthDesktop: 240,
   dockTopMobile: 10,
   dockTopDesktop: 16,
-  startDelayMs: 500,
-  moveMs: 800,
+  startDelayMs: 420,
+  moveMs: 760,
 };
+
+const MOBILE_LOGO_RESERVED = 76; // px of space under the fixed logo on mobile
 /* ==================================================================== */
 
 type ThemeMode = "dark" | "light";
@@ -64,7 +66,9 @@ function useSectionTheme() {
     if (!secs.length) return;
     const io = new IntersectionObserver(
       (entries) => {
-        const best = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        const best = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (best) {
           const t = (best.target as HTMLElement).dataset.theme as ThemeMode;
           if (t && t !== theme) setTheme(t);
@@ -90,7 +94,15 @@ function IntroOverlay({ show }: { show: boolean }) {
   );
 }
 
-function KeyedLogo({ theme, source, onReady }: { theme: ThemeMode; source: StaticImageData; onReady?: () => void }) {
+function KeyedLogo({
+  theme,
+  source,
+  onReady,
+}: {
+  theme: ThemeMode;
+  source: StaticImageData;
+  onReady?: () => void;
+}) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
 
@@ -117,14 +129,22 @@ function KeyedLogo({ theme, source, onReady }: { theme: ThemeMode; source: Stati
       const mono = theme === "dark" ? 255 : 0;
 
       for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-        if (r >= hardCut && g >= hardCut && b >= hardCut) { data[i + 3] = 0; continue; }
+        const r = data[i],
+          g = data[i + 1],
+          b = data[i + 2],
+          a = data[i + 3];
+        if (r >= hardCut && g >= hardCut && b >= hardCut) {
+          data[i + 3] = 0;
+          continue;
+        }
         if (r >= softCut && g >= softCut && b >= softCut) {
           const avg = (r + g + b) / 3;
           const t = Math.min(1, Math.max(0, (hardCut - avg) / (hardCut - softCut)));
           data[i + 3] = Math.round(a * t);
         }
-        data[i] = mono; data[i + 1] = mono; data[i + 2] = mono;
+        data[i] = mono;
+        data[i + 1] = mono;
+        data[i + 2] = mono;
       }
 
       ctx.putImageData(id, 0, 0);
@@ -132,11 +152,23 @@ function KeyedLogo({ theme, source, onReady }: { theme: ThemeMode; source: Stati
       setDataUrl(canvas.toDataURL("image/png"));
       onReady?.();
     };
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [theme, source, onReady]);
 
   if (!dataUrl || !dims) return null;
-  return <Image src={dataUrl} alt="Automate with Colin" width={dims.w} height={dims.h} priority unoptimized className="h-auto w-full select-none" />;
+  return (
+    <Image
+      src={dataUrl}
+      alt="Automate with Colin"
+      width={dims.w}
+      height={dims.h}
+      priority
+      unoptimized
+      className="h-auto w-full select-none"
+    />
+  );
 }
 
 function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }) {
@@ -149,7 +181,10 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
     if (!logoReady) return;
     const t = window.setTimeout(() => setDock(true), LOGO.startDelayMs);
     const d = window.setTimeout(() => onDone?.(), LOGO.startDelayMs + LOGO.moveMs);
-    return () => { window.clearTimeout(t); window.clearTimeout(d); };
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(d);
+    };
   }, [logoReady, onDone]);
 
   const dockWidth = isMobile ? LOGO.dockWidthMobile : LOGO.dockWidthDesktop;
@@ -162,7 +197,7 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
       className={`${dock ? "pointer-events-auto" : "pointer-events-none"} fixed z-[70] select-none`}
       initial={{ top: "50%", left: "50%", x: "-50%", y: "-50%", width: startWidth, opacity: 1 }}
       animate={dock ? { top: dockTop, left: 16, x: 0, y: 0, width: dockWidth } : undefined}
-      transition={{ duration: LOGO.moveMs / 1000, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+      transition={{ duration: LOGO.moveMs / 1000, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
     >
       <Link
         href="/"
@@ -170,9 +205,7 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
         prefetch={false}
         onClick={(e) => {
           e.preventDefault();
-          // Hard reload to reset all state/springs/snap positions reliably.
           window.location.assign("/");
-          // Fallback SPA nav if needed:
           router.replace("/");
         }}
       >
@@ -185,11 +218,14 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
 /* ---------------- Shared bits ---------------- */
 const sectionReveal: Variants = {
   initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
 function StatsRow({
-  items, variant, mobileCarousel, className = "",
+  items,
+  variant,
+  mobileCarousel,
+  className = "",
 }: {
   items: { v: string; k: string }[];
   variant: "dark" | "light";
@@ -210,6 +246,15 @@ function StatsRow({
             <div className={variant === "dark" ? "text-white/70 text-sm" : "text-black/60 text-sm"}>{s.k}</div>
           </div>
         ))}
+        <style jsx>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
       </div>
     );
   }
@@ -230,7 +275,11 @@ function StatsRow({
 function Hero() {
   const isMobile = useIsMobile();
   return (
-    <section id="hero" data-theme="dark" className="snap-start min-h-[100svh] bg-black text-white flex items-center [scroll-snap-stop:always]">
+    <section
+      id="hero"
+      data-theme="dark"
+      className="snap-start min-h-[100dvh] bg-black text-white flex items-center [scroll-snap-stop:always]"
+    >
       <motion.div
         variants={sectionReveal}
         initial="initial"
@@ -256,9 +305,7 @@ function Hero() {
           />
         </h2>
 
-        <p className="mx-auto mt-5 max-w-2xl text-lg opacity-85">
-          Automate the grind, and add AI where it actually pays.
-        </p>
+        <p className="mx-auto mt-5 max-w-2xl text-lg opacity-85">Automate the grind, and add AI where it actually pays.</p>
 
         <div className="mt-8 flex items-center justify-center gap-3">
           <a
@@ -279,13 +326,13 @@ function Hero() {
   );
 }
 
-/** Desktop combined page: two rows with viewport-based minimums to prevent squish */
+/** Desktop: combined page; grid rows use viewport-based minimums to prevent squish */
 function AutomationWithPlaybooksDesktop() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
-    { Icon: IconBot,       title: "AI Sidekicks",       blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, securely" },
-    { Icon: IconCable,     title: "Integrations",       blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
-    { Icon: IconCode,      title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
+    { Icon: IconBot, title: "AI Sidekicks", blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, securely" },
+    { Icon: IconCable, title: "Integrations", blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
+    { Icon: IconCode, title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
   ];
 
   const plays = [
@@ -302,7 +349,8 @@ function AutomationWithPlaybooksDesktop() {
   }, []);
 
   const scrollByCards = (dir: 1 | -1) => {
-    const el = trackRef.current; if (!el) return;
+    const el = trackRef.current;
+    if (!el) return;
     const card = el.querySelector<HTMLElement>("[data-card]");
     const step = card ? card.offsetWidth + 16 : 320;
     el.scrollBy({ left: dir * step, behavior: "smooth" });
@@ -312,7 +360,7 @@ function AutomationWithPlaybooksDesktop() {
     <section
       id="automation-desktop"
       data-theme="light"
-      className="hidden md:grid snap-start min-h-[100svh] grid-rows-[minmax(48vh,1fr)_minmax(42vh,1fr)] [scroll-snap-stop:always]"
+      className="hidden md:grid snap-start min-h-[100dvh] grid-rows-[minmax(48dvh,1fr)_minmax(42dvh,1fr)] [scroll-snap-stop:always]"
     >
       {/* Row 1 (white) */}
       <div className="bg-white text-black flex items-center">
@@ -326,7 +374,7 @@ function AutomationWithPlaybooksDesktop() {
           <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
           <h2 className="text-3xl font-semibold">Automation with AI at the core</h2>
 
-          <div className="mt-6 grid grid-cols-2 gap-4 auto-rows-[1fr]">
+          <div className="mt-6 grid grid-cols-2 gap-4 auto-rows-[1fr] pb-4">
             {items.map(({ Icon, title, blurb, pill }, i) => (
               <motion.div
                 key={title}
@@ -410,8 +458,13 @@ function AutomationWithPlaybooksDesktop() {
           </div>
 
           <style jsx>{`
-            .no-scrollbar::-webkit-scrollbar { display: none; }
-            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            .no-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .no-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
           `}</style>
         </motion.div>
       </div>
@@ -423,21 +476,41 @@ function AutomationWithPlaybooksDesktop() {
 function AutomationMobile() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
-    { Icon: IconBot,       title: "AI Sidekicks",       blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, securely" },
-    { Icon: IconCable,     title: "Integrations",       blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
-    { Icon: IconCode,      title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
+    { Icon: IconBot, title: "AI Sidekicks", blurb: "Practical copilots for ops, support, and decisions.", pill: "Your data, securely" },
+    { Icon: IconCable, title: "Integrations", blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
+    { Icon: IconCode, title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
   ];
   return (
-    <section id="automation" data-theme="light" className="md:hidden snap-start min-h-[100svh] bg-white text-black flex items-center pt-20 [scroll-snap-stop:always]">
-      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.55 }} className="mx-auto max-w-6xl px-6 w-full">
-        <p className="mb-2 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
+    <section
+      id="automation"
+      data-theme="light"
+      className="md:hidden snap-start min-h-[100dvh] bg-white text-black flex items-start [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+76px)]"
+      style={{ paddingTop: `calc(env(safe-area-inset-top) + ${MOBILE_LOGO_RESERVED}px)` }}
+    >
+      <motion.div
+        variants={sectionReveal}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, amount: 0.55 }}
+        className="mx-auto max-w-6xl px-6 w-full"
+      >
+        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
         <h2 className="text-3xl font-semibold">Automation with AI at the core</h2>
 
-        <div className="mt-6 grid gap-5">
+        <div className="mt-5 grid gap-4 pb-6">
           {items.map(({ Icon, title, blurb, pill }, i) => (
-            <motion.div key={title} initial={{ y: 12, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, margin: "-10% 0px -10% 0px" }} transition={{ delay: i * 0.05, duration: 0.35 }} className="rounded-2xl border border-black/12 p-5 shadow-[0_2px_24px_rgba(0,0,0,0.05)] bg-white">
+            <motion.div
+              key={title}
+              initial={{ y: 12, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+              transition={{ delay: i * 0.05, duration: 0.35 }}
+              className="rounded-2xl border border-black/12 p-5 shadow-[0_2px_24px_rgba(0,0,0,0.05)] bg-white"
+            >
               <div className="flex items-start gap-4">
-                <div className="rounded-xl border border-black/15 p-3 text-black"><Icon className="h-6 w-6" /></div>
+                <div className="rounded-xl border border-black/15 p-3 text-black">
+                  <Icon className="h-6 w-6" />
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <h3 className="text-lg font-medium">{title}</h3>
@@ -449,7 +522,6 @@ function AutomationMobile() {
             </motion.div>
           ))}
         </div>
-        <div className="h-8" />
       </motion.div>
     </section>
   );
@@ -471,43 +543,72 @@ function PlaybooksMobile() {
 
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   useEffect(() => {
-    const el = trackRef.current; if (!el) return;
+    const el = trackRef.current;
+    if (!el) return;
     let t: number | null = null;
-    const start = () => { stop(); t = window.setInterval(() => {
-      if (isUserInteracting) return;
-      el.scrollBy({ left: el.clientWidth * 0.9, behavior: "smooth" });
-      if (Math.abs(el.scrollLeft + el.clientWidth - el.scrollWidth) < 16) el.scrollTo({ left: 0, behavior: "smooth" });
-    }, 3500); };
-    const stop = () => { if (t) window.clearInterval(t); t = null; };
-    start(); return stop;
+    const start = () => {
+      stop();
+      t = window.setInterval(() => {
+        if (isUserInteracting) return;
+        el.scrollBy({ left: el.clientWidth * 0.9, behavior: "smooth" });
+        if (Math.abs(el.scrollLeft + el.clientWidth - el.scrollWidth) < 16) el.scrollTo({ left: 0, behavior: "smooth" });
+      }, 3500);
+    };
+    const stop = () => {
+      if (t) window.clearInterval(t);
+      t = null;
+    };
+    start();
+    return stop;
   }, [isUserInteracting]);
 
   return (
-    <section id="playbooks" data-theme="dark" className="md:hidden snap-start min-h-[100svh] bg-black text-white flex items-center pt-16 [scroll-snap-stop:always]">
-      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.55 }} className="mx-auto max-w-6xl px-6 w-full">
+    <section
+      id="playbooks"
+      data-theme="dark"
+      className="md:hidden snap-start min-h-[100dvh] bg-black text-white flex items-center [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+24px)]"
+    >
+      <motion.div
+        variants={sectionReveal}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, amount: 0.55 }}
+        className="mx-auto max-w-6xl px-6 w-full"
+      >
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/70">Templates & Playbooks</p>
         <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
 
-        <div className="mt-5">
-          <div ref={trackRef} className="no-scrollbar overflow-x-auto scroll-smooth pt-2 pb-1" onPointerDown={() => setIsUserInteracting(true)} onTouchStart={() => setIsUserInteracting(true)}>
+        <div className="mt-6">
+          <div
+            ref={trackRef}
+            className="no-scrollbar overflow-x-auto scroll-smooth pt-2 pb-1"
+            onPointerDown={() => setIsUserInteracting(true)}
+            onTouchStart={() => setIsUserInteracting(true)}
+          >
             <div className="flex min-w-[640px] gap-4 pr-1">
               {plays.map((p, i) => (
-                <motion.div key={p.name} initial={{ y: 10, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} data-card className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur">
+                <motion.div
+                  key={p.name}
+                  initial={{ y: 10, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  data-card
+                  className="min-w-[280px] rounded-2xl border border-white/12 bg-white/5 p-5 backdrop-blur"
+                >
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium">{p.name}</h3>
                     <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{p.time}</span>
                   </div>
                   <p className="mt-2 text-white/85">{p.result}</p>
-                  <a href="#contact" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">See how it works →</a>
+                  <a href="#contact" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">
+                    See how it works →
+                  </a>
                 </motion.div>
               ))}
             </div>
           </div>
         </div>
-        <style jsx>{`
-          .no-scrollbar::-webkit-scrollbar { display: none; }
-          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
       </motion.div>
     </section>
   );
@@ -522,13 +623,30 @@ function ProcessPage() {
     { k: "Uplift", d: "Measure, train, hand off." },
   ];
   return (
-    <section id="process" data-theme="light" className="snap-start min-h-[100svh] bg-white text-black flex items-center md:py-4 [scroll-snap-stop:always]">
+    <section
+      id="process"
+      data-theme="light"
+      className="snap-start min-h-[100dvh] bg-white text-black flex items-center md:py-4 [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+20px)] md:pt-0"
+    >
       <div className="mx-auto max-w-6xl px-6 w-full text-center">
         <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-black/80">Process</p>
 
-        <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.55 }} className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-center">
+        <motion.div
+          variants={sectionReveal}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.55 }}
+          className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-center"
+        >
           {steps.map((s, i) => (
-            <motion.div key={s.k} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} className="rounded-2xl border border-black/12 p-5 bg-white">
+            <motion.div
+              key={s.k}
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.05 }}
+              className="rounded-2xl border border-black/12 p-5 bg-white"
+            >
               <div className="text-sm text-black/55">Step {i + 1}</div>
               <div className="mt-1 text-lg font-medium">{s.k}</div>
               <div className="mt-1 text-black/75">{s.d}</div>
@@ -549,8 +667,18 @@ function ProcessPage() {
 function CommunityPage() {
   const isMobile = useIsMobile();
   return (
-    <section id="community" data-theme="dark" className="snap-start min-h-[100svh] bg-black text-white flex items-center [scroll-snap-stop:always]">
-      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.6 }} className="mx-auto max-w-6xl px-6 w-full text-center">
+    <section
+      id="community"
+      data-theme="dark"
+      className="snap-start min-h-[100dvh] bg-black text-white flex items-center [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+12px)] md:pt-0"
+    >
+      <motion.div
+        variants={sectionReveal}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, amount: 0.6 }}
+        className="mx-auto max-w-6xl px-6 w-full text-center"
+      >
         <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-white/70">Community</p>
         <h2 className="text-3xl font-semibold">Build with us, not alone</h2>
         <p className="mt-3 max-w-2xl mx-auto text-white/85">
@@ -558,7 +686,10 @@ function CommunityPage() {
           Learn what actually works, ship faster, and get unstuck with feedback.
         </p>
         <div className="mt-6">
-          <a href="https://skool.link/your-group" className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium hover:bg-white/20 transition">
+          <a
+            href="https://skool.link/your-group"
+            className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium hover:bg-white/20 transition"
+          >
             Join the Community
           </a>
         </div>
@@ -583,7 +714,10 @@ function ContactPage({
   const ref = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!ref.current) return;
-    const io = new IntersectionObserver(([e]) => onInViewChange?.(e.isIntersecting && e.intersectionRatio >= visibilityAmount), { threshold: [visibilityAmount] });
+    const io = new IntersectionObserver(
+      ([e]) => onInViewChange?.(e.isIntersecting && e.intersectionRatio >= visibilityAmount),
+      { threshold: [visibilityAmount] }
+    );
     io.observe(ref.current);
     return () => io.disconnect();
   }, [onInViewChange, visibilityAmount]);
@@ -593,17 +727,26 @@ function ContactPage({
       ref={ref}
       id="contact"
       data-theme="light"
-      className="snap-start min-h-[100svh] bg-white text-black flex items-center pt-16 md:pt-4 [scroll-snap-stop:always]"
+      className="snap-start min-h-[100dvh] bg-white text-black flex items-center pt-[calc(env(safe-area-inset-top)+16px)] md:pt-4 [scroll-snap-stop:always]"
       style={{ paddingBottom: bottomPadPx ? bottomPadPx + 16 : undefined }}
     >
-      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.6 }} className="mx-auto max-w-6xl px-6 w-full text-center relative z-10">
+      <motion.div
+        variants={sectionReveal}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, amount: 0.6 }}
+        className="mx-auto max-w-6xl px-6 w-full text-center relative z-10"
+      >
         <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-black/70">Contact</p>
         <h2 className="text-3xl font-semibold">Talk to Colin</h2>
         <p className="mt-3 max-w-2xl mx-auto text-black/80">
           Bring us your bottleneck. We’ll map it, automate the grind, and add AI where it actually pays.
         </p>
         <div className="mt-6">
-          <a href="https://calendly.com/your-link" className="inline-flex items-center justify-center rounded-full border border-black/15 bg-black px-5 py-2 text-sm font-medium text-white hover:bg-black/90">
+          <a
+            href="https://calendly.com/your-link"
+            className="inline-flex items-center justify-center rounded-full border border-black/15 bg-black px-5 py-2 text-sm font-medium text-white hover:bg-black/90"
+          >
             Let’s Automate
           </a>
         </div>
@@ -614,16 +757,39 @@ function ContactPage({
 
 /* ---------------- Icons ---------------- */
 function IconWorkflow(props: React.SVGProps<SVGSVGElement>) {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}><path d="M4 4h6v6H4zM14 14h6v6h-6z" strokeWidth="1.5" /><path d="M10 7h4a3 3 0 013 3v1M14 17h-4a3 3 0 01-3-3v-1" strokeWidth="1.5" /></svg>);
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path d="M4 4h6v6H4zM14 14h6v6h-6z" strokeWidth="1.5" />
+      <path d="M10 7h4a3 3 0 013 3v1M14 17h-4a3 3 0 01-3-3v-1" strokeWidth="1.5" />
+    </svg>
+  );
 }
 function IconBot(props: React.SVGProps<SVGSVGElement>) {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}><rect x="4" y="7" width="16" height="10" rx="2" strokeWidth="1.5" /><circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" /><path d="M12 4v3M8 19v1a2 2 0 002 2h4a2 2 0 002-2v-1" strokeWidth="1.5" /></svg>);
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <rect x="4" y="7" width="16" height="10" rx="2" strokeWidth="1.5" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="15" cy="12" r="1" />
+      <path d="M12 4v3M8 19v1a2 2 0 002 2h4a2 2 0 002-2v-1" strokeWidth="1.5" />
+    </svg>
+  );
 }
 function IconCable(props: React.SVGProps<SVGSVGElement>) {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}><path d="M4 12h6M14 12h6" strokeWidth="1.5" /><rect x="2" y="10" width="4" height="4" rx="1" /><rect x="18" y="10" width="4" height="4" rx="1" /><path d="M10 12c0-4 4-4 4 0" strokeWidth="1.5" /></svg>);
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path d="M4 12h6M14 12h6" strokeWidth="1.5" />
+      <rect x="2" y="10" width="4" height="4" rx="1" />
+      <rect x="18" y="10" width="4" height="4" rx="1" />
+      <path d="M10 12c0-4 4-4 4 0" strokeWidth="1.5" />
+    </svg>
+  );
 }
 function IconCode(props: React.SVGProps<SVGSVGElement>) {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}><path d="M8 16l-4-4 4-4M16 8l4 4-4 4" strokeWidth="1.5" /></svg>);
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path d="M8 16l-4-4 4-4M16 8l4 4-4 4" strokeWidth="1.5" />
+    </svg>
+  );
 }
 
 /* ---------------- Main page ---------------- */
@@ -659,7 +825,8 @@ export default function HomeClient() {
       <IntroOverlay show={introRunning} />
       <MotionLogo theme={theme} onDone={() => setIntroRunning(false)} />
 
-      <main className="h-screen overflow-y-auto snap-y snap-mandatory scroll-smooth">
+      {/* Use dynamic viewport height; snap settings & overscroll containment reduce iOS Safari glitches */}
+      <main className="h-[100dvh] overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-contain">
         <Hero />
         <AutomationWithPlaybooksDesktop />
         <AutomationMobile />
@@ -673,12 +840,12 @@ export default function HomeClient() {
         />
       </main>
 
-      {/* Footer: smaller on mobile so it never hogs the screen */}
+      {/* Footer: full width, no scale, slides in only on last page */}
       <div
         ref={footerRef}
         className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-300 ${
           showFooter ? "translate-y-0" : "translate-y-full"
-        } md:scale-100 scale-[0.86] origin-bottom`}
+        } w-full`}
       >
         <Footer />
       </div>
