@@ -497,7 +497,7 @@ function AutomationMobile() {
         <p className="mb-1 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
         <h2 className="text-3xl font-semibold">Automation with AI at the core</h2>
 
-        <div className="mt-5 grid gap-4 pb-6">
+        <div className="mt-3 md:mt-5 grid gap-4 pb-6">
           {items.map(({ Icon, title, blurb, pill }, i) => (
             <motion.div
               key={title}
