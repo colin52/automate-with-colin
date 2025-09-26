@@ -1,3 +1,4 @@
+// src/components/HomeClient.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -18,8 +19,15 @@ const STATS_PROCESS_DESKTOP = [
   { k: "Avg ROI (12 mo)", v: "3.7×" },
 ];
 
+const STATS_COMMUNITY = [
+  { v: "80+", k: "Workshops & AMAs" },
+  { v: "1,500+", k: "Builders" },
+  { v: "40+", k: "Shared Playbooks" },
+  { v: "4.9★", k: "Avg. Feedback" },
+];
+
 const LOGO = {
-  startWidthMobile: 120,
+  startWidthMobile: 120, // smaller on mobile so first-load feels right
   startWidthDesktop: 520,
   dockWidthMobile: 110,
   dockWidthDesktop: 240,
@@ -30,8 +38,8 @@ const LOGO = {
 };
 
 const MOBILE_LOGO_RESERVED = 92; // px of space under the fixed logo on mobile
-
 /* ==================================================================== */
+
 type ThemeMode = "dark" | "light";
 
 function useIsMobile(bp = 768) {
@@ -112,11 +120,10 @@ function KeyedLogo({
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-
       ctx.drawImage(img, 0, 0, w, h);
+
       const id = ctx.getImageData(0, 0, w, h);
       const data = id.data;
-
       const hardCut = 245;
       const softCut = 232;
       const mono = theme === "dark" ? 255 : 0;
@@ -126,7 +133,6 @@ function KeyedLogo({
           g = data[i + 1],
           b = data[i + 2],
           a = data[i + 3];
-
         if (r >= hardCut && g >= hardCut && b >= hardCut) {
           data[i + 3] = 0;
           continue;
@@ -212,11 +218,7 @@ function MotionLogo({ theme, onDone }: { theme: ThemeMode; onDone?: () => void }
 /* ---------------- Shared bits ---------------- */
 const sectionReveal: Variants = {
   initial: { opacity: 0, y: 16 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-  },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
 function StatsRow({
@@ -286,9 +288,11 @@ function Hero() {
         className="mx-auto max-w-6xl px-6 w-full text-center"
       >
         <h1 className="font-bold leading-tight md:text-7xl text-[clamp(1.35rem,7.2vw,3.2rem)]">
-          Smarter Systems. <br />
+          Smarter Systems.
+          <br />
           Stronger Businesses.
         </h1>
+
         <h2 className="mt-4 text-2xl md:text-3xl">
           We Help You{" "}
           <TypeCycle
@@ -300,7 +304,9 @@ function Hero() {
             highlightClassName="rounded bg-white px-2 text-black"
           />
         </h2>
+
         <p className="mx-auto mt-5 max-w-2xl text-lg opacity-85">Automate the grind, and add AI where it actually pays.</p>
+
         <div className="mt-8 flex items-center justify-center gap-3">
           <a
             href={isMobile ? "#automation" : "#automation-desktop"}
@@ -308,14 +314,19 @@ function Hero() {
           >
             Work With Us
           </a>
-          {/* Community button removed */}
+          <a
+            href="#community"
+            className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
+          >
+            Learn to Automate
+          </a>
         </div>
       </motion.div>
     </section>
   );
 }
 
-/** Desktop: combined page */
+/** Desktop: combined page; grid rows use viewport-based minimums to prevent squish */
 function AutomationWithPlaybooksDesktop() {
   const items = [
     { Icon: IconWorkflow, title: "Automation Systems", blurb: "Replace manual steps with reliable flows that scale.", pill: "AI inside" },
@@ -362,6 +373,7 @@ function AutomationWithPlaybooksDesktop() {
         >
           <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
           <h2 className="text-3xl font-semibold">Automation with AI at the core</h2>
+
           <div className="mt-6 grid grid-cols-2 gap-4 auto-rows-[1fr] pb-4">
             {items.map(({ Icon, title, blurb, pill }, i) => (
               <motion.div
@@ -402,6 +414,7 @@ function AutomationWithPlaybooksDesktop() {
         >
           <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-white/70">Templates & Playbooks</p>
           <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
+
           <div className="relative mt-5">
             <button
               aria-label="Previous"
@@ -417,6 +430,7 @@ function AutomationWithPlaybooksDesktop() {
             >
               ›
             </button>
+
             <div ref={trackRef} className="no-scrollbar overflow-x-auto scroll-smooth pt-2 pb-1">
               <div className="flex min-w-[640px] gap-4 pr-1">
                 {plays.map((p, i) => (
@@ -442,6 +456,7 @@ function AutomationWithPlaybooksDesktop() {
               </div>
             </div>
           </div>
+
           <style jsx>{`
             .no-scrollbar::-webkit-scrollbar {
               display: none;
@@ -465,7 +480,6 @@ function AutomationMobile() {
     { Icon: IconCable, title: "Integrations", blurb: "Apps working together—APIs, webhooks, and clean handoffs.", pill: "API-first" },
     { Icon: IconCode, title: "Custom Development", blurb: "When templates aren’t enough, we engineer it.", pill: "Full-stack" },
   ];
-
   return (
     <section
       id="automation"
@@ -482,6 +496,7 @@ function AutomationMobile() {
       >
         <p className="mb-1 text-xs uppercase tracking-[0.2em] text-black/80">What We Build</p>
         <h2 className="text-3xl font-semibold">Automation with AI at the core</h2>
+
         <div className="mt-3 md:mt-5 grid gap-4 pb-6">
           {items.map(({ Icon, title, blurb, pill }, i) => (
             <motion.div
@@ -548,10 +563,21 @@ function PlaybooksMobile() {
   }, [isUserInteracting]);
 
   return (
-    <section id="playbooks" data-theme="dark" className="md:hidden snap-start min-h-[100dvh] bg-black text-white flex items-center [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+24px)]">
-      <motion.div variants={sectionReveal} initial="initial" whileInView="animate" viewport={{ once: true, amount: 0.55 }} className="mx-auto max-w-6xl px-6 w-full">
+    <section
+      id="playbooks"
+      data-theme="dark"
+      className="md:hidden snap-start min-h-[100dvh] bg-black text-white flex items-center [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+24px)]"
+    >
+      <motion.div
+        variants={sectionReveal}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, amount: 0.55 }}
+        className="mx-auto max-w-6xl px-6 w-full"
+      >
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/70">Templates & Playbooks</p>
         <h2 className="text-3xl font-semibold">Grab a proven starter and go</h2>
+
         <div className="mt-6">
           <div
             ref={trackRef}
@@ -604,6 +630,7 @@ function ProcessPage() {
     >
       <div className="mx-auto max-w-6xl px-6 w-full text-center">
         <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-black/80">Process</p>
+
         <motion.div
           variants={sectionReveal}
           initial="initial"
@@ -633,6 +660,44 @@ function ProcessPage() {
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+function CommunityPage() {
+  const isMobile = useIsMobile();
+  return (
+    <section
+      id="community"
+      data-theme="dark"
+      className="snap-start min-h-[100dvh] bg-black text-white flex items-center [scroll-snap-stop:always] pt-[calc(env(safe-area-inset-top)+12px)] md:pt-0"
+    >
+      <motion.div
+        variants={sectionReveal}
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true, amount: 0.6 }}
+        className="mx-auto max-w-6xl px-6 w-full text-center"
+      >
+        <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-white/70">Community</p>
+        <h2 className="text-3xl font-semibold">Build with us, not alone</h2>
+        <p className="mt-3 max-w-2xl mx-auto text-white/85">
+          Workshops, templates, office hours, and a community of builders swapping real-world playbooks.
+          Learn what actually works, ship faster, and get unstuck with feedback.
+        </p>
+        <div className="mt-6">
+          <a
+            href="https://skool.link/your-group"
+            className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium hover:bg-white/20 transition"
+          >
+            Join the Community
+          </a>
+        </div>
+
+        <div className="mt-8">
+          <StatsRow items={STATS_COMMUNITY} variant="light" mobileCarousel={isMobile} />
+        </div>
+      </motion.div>
     </section>
   );
 }
@@ -690,85 +755,6 @@ function ContactPage({
   );
 }
 
-/* ---------------- Simple Policy Modal ---------------- */
-type PolicyType = "privacy" | "terms" | null;
-
-function PolicyModal({ type, onClose }: { type: PolicyType; onClose: () => void }) {
-  if (!type) return null;
-
-  const title = type === "privacy" ? "Privacy Policy" : "Terms & Conditions";
-
-  return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div
-        className="relative z-10 max-w-2xl w-full rounded-2xl border border-white/15 bg-neutral-900 text-white p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-xl font-semibold">{title}</h3>
-          <button
-            onClick={onClose}
-            className="rounded-full border border-white/20 bg-white/10 w-9 h-9 grid place-items-center hover:bg-white/20"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
-
-        {type === "privacy" ? (
-          <div className="mt-4 space-y-3 text-sm text-white/90 leading-relaxed">
-            <p>
-              We only collect the information you choose to share with us (for example when you book a call or submit a form).
-            </p>
-            <p>
-              We use your information only if you allow us to for marketing and to provide the services you request. We do not sell,
-              rent, or share your personal information with third parties, except as needed to operate our services (e.g., scheduling,
-              payment, or email providers) and only under confidentiality obligations.
-            </p>
-            <p>
-              You can ask us to update or delete your information at any time by contacting us. If this policy changes, we’ll update
-              it here.
-            </p>
-            <p className="text-xs text-white/60">This simple policy is provided for convenience and is not legal advice.</p>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-3 text-sm text-white/90 leading-relaxed">
-            <p>
-              By using this site and our services, you agree to act lawfully and not misuse the site. All content is provided “as is”
-              without warranties. To the extent permitted by law, we’re not liable for indirect or consequential losses.
-            </p>
-            <p>
-              If you purchase services, the specific proposal or order may include additional terms. U.S. law governs, and disputes
-              will be handled in our home state courts unless otherwise agreed in writing.
-            </p>
-            <p>
-              If any part of these terms is unenforceable, the rest remains in effect. We may update these terms by posting changes
-              here.
-            </p>
-            <p className="text-xs text-white/60">This simple summary is not legal advice.</p>
-          </div>
-        )}
-
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onClose}
-            className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ---------------- Icons ---------------- */
 function IconWorkflow(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -810,14 +796,10 @@ function IconCode(props: React.SVGProps<SVGSVGElement>) {
 export default function HomeClient() {
   const theme = useSectionTheme();
   const isMobile = useIsMobile();
-
   const [introRunning, setIntroRunning] = useState(true);
   const [showFooter, setShowFooter] = useState(false);
   const [footerH, setFooterH] = useState(0);
   const footerRef = useRef<HTMLDivElement | null>(null);
-
-  // Policy modal state
-  const [policyType, setPolicyType] = useState<PolicyType>(null);
 
   // Measure footer height so Contact can pad safely under it
   useEffect(() => {
@@ -835,28 +817,7 @@ export default function HomeClient() {
     };
   }, []);
 
-  // Delegate clicks from anywhere (e.g., Footer) to open policy/terms modal
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      const a = target?.closest("a") as HTMLAnchorElement | null;
-      if (!a) return;
-      const href = (a.getAttribute("href") || "").toLowerCase();
-
-      if (/#privacy$/.test(href) || href.endsWith("/privacy")) {
-        e.preventDefault();
-        setPolicyType("privacy");
-      } else if (/#terms$/.test(href) || href.endsWith("/terms") || href.includes("terms-and-conditions")) {
-        e.preventDefault();
-        setPolicyType("terms");
-      }
-    };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, []);
-
-  // Keep the section list in sync (community removed)
-  useMemo<string[]>(() => ["hero", "automation-desktop", "automation", "playbooks", "process", "contact"], []);
+  useMemo<string[]>(() => ["hero", "automation-desktop", "automation", "playbooks", "process", "community", "contact"], []);
 
   return (
     <>
@@ -864,14 +825,14 @@ export default function HomeClient() {
       <IntroOverlay show={introRunning} />
       <MotionLogo theme={theme} onDone={() => setIntroRunning(false)} />
 
-      {/* Main content */}
+      {/* Use dynamic viewport height; snap settings & overscroll containment reduce iOS Safari glitches */}
       <main className="h-[100dvh] overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-contain">
         <Hero />
         <AutomationWithPlaybooksDesktop />
         <AutomationMobile />
         <PlaybooksMobile />
         <ProcessPage />
-        {/* CommunityPage removed */}
+        <CommunityPage />
         <ContactPage
           onInViewChange={(vis) => setShowFooter(vis)}
           visibilityAmount={isMobile ? 0.8 : 0.55}
@@ -879,7 +840,7 @@ export default function HomeClient() {
         />
       </main>
 
-      {/* Footer: slides in only on last page */}
+      {/* Footer: full width, no scale, slides in only on last page */}
       <div
         ref={footerRef}
         className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-300 ${
@@ -888,9 +849,6 @@ export default function HomeClient() {
       >
         <Footer />
       </div>
-
-      {/* Policy / Terms modal */}
-      <PolicyModal type={policyType} onClose={() => setPolicyType(null)} />
     </>
   );
 }
