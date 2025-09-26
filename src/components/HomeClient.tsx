@@ -835,24 +835,67 @@ export default function HomeClient() {
     };
   }, []);
 
-  // Delegate clicks from anywhere (e.g., Footer) to open policy/terms modal
+  // Helper: decide if an anchor href is a policy/terms link
+  function isPolicyHref(href: string) {
+    const h = (href || "").toLowerCase().trim();
+    const isPrivacy =
+      h.endsWith("#privacy") ||
+      h.endsWith("/privacy") ||
+      h.includes("/legal/privacy") ||
+      h === "privacy" ||
+      h.includes("?page=privacy") ||
+      h.includes("#privacy") ||
+      h.includes("privacy");
+
+    const isTerms =
+      h.endsWith("#terms") ||
+      h.endsWith("/terms") ||
+      h.includes("terms-and-conditions") ||
+      h.includes("/legal/terms") ||
+      h === "terms" ||
+      h.includes("?page=terms") ||
+      h.includes("#terms") ||
+      h.includes("terms");
+
+    return { isPrivacy, isTerms };
+  }
+
+  // Intercept policy/terms clicks BEFORE Next.js handles navigation (capture phase)
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
+    const intercept = (ev: Event) => {
+      // Find nearest anchor for any clicked/activated element
+      const target = ev.target as HTMLElement | null;
       const a = target?.closest("a") as HTMLAnchorElement | null;
       if (!a) return;
-      const href = (a.getAttribute("href") || "").toLowerCase();
 
-      if (/#privacy$/.test(href) || href.endsWith("/privacy")) {
-        e.preventDefault();
-        setPolicyType("privacy");
-      } else if (/#terms$/.test(href) || href.endsWith("/terms") || href.includes("terms-and-conditions")) {
-        e.preventDefault();
-        setPolicyType("terms");
-      }
+      const href = a.getAttribute("href") || "";
+      const { isPrivacy, isTerms } = isPolicyHref(href);
+      if (!isPrivacy && !isTerms) return;
+
+      // Stop ALL navigation (including new-tab/middle-click/keyboard)
+      ev.preventDefault();
+      ev.stopImmediatePropagation?.();
+      ev.stopPropagation();
+
+      setPolicyType(isPrivacy ? "privacy" : "terms");
     };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
+
+    // Capture phase: run BEFORE Next.js Link/router handlers
+    document.addEventListener("pointerdown", intercept, true); // earliest for mouse/touch
+    document.addEventListener("click", intercept, true);       // regular clicks/activations
+    document.addEventListener("auxclick", intercept, true);    // middle-click
+    const keydownHandler = (e: Event) => {
+      const ke = e as KeyboardEvent;
+      if (ke.key === "Enter" || ke.key === " ") intercept(e); // keyboard-activated links
+    };
+    document.addEventListener("keydown", keydownHandler, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", intercept, true);
+      document.removeEventListener("click", intercept, true);
+      document.removeEventListener("auxclick", intercept, true);
+      document.removeEventListener("keydown", keydownHandler, true);
+    };
   }, []);
 
   // Keep the section list in sync (community removed)
