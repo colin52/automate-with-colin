@@ -271,7 +271,6 @@ function StatsRow({
 
 /* ---------------- Sections ---------------- */
 function Hero() {
-  const isMobile = useIsMobile();
   return (
     <section
       id="hero"
@@ -301,14 +300,21 @@ function Hero() {
           />
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-lg opacity-85">Automate the grind, and add AI where it actually pays.</p>
-        <div className="mt-8 flex items-center justify-center gap-3">
+
+        {/* Updated CTAs */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
-            href={isMobile ? "#automation" : "#automation-desktop"}
+            href="https://calendar.app.google/VfP3ygN6ZbCdpj9X9"
             className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
           >
             Work With Us
           </a>
-          {/* Community button removed */}
+          <a
+            href="https://forms.gle/1RZmwfzDTaFGpJQ79"
+            className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20 active:scale-[.98]"
+          >
+            Discover Automations
+          </a>
         </div>
       </motion.div>
     </section>
@@ -434,7 +440,7 @@ function AutomationWithPlaybooksDesktop() {
                       <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{p.time}</span>
                     </div>
                     <p className="mt-2 text-white/85">{p.result}</p>
-                    <a href="#contact" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">
+                    <a href="https://calendar.app.google/VfP3ygN6ZbCdpj9X9" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">
                       See how it works →
                     </a>
                   </motion.div>
@@ -575,7 +581,7 @@ function PlaybooksMobile() {
                     <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{p.time}</span>
                   </div>
                   <p className="mt-2 text-white/85">{p.result}</p>
-                  <a href="#contact" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">
+                  <a href="https://calendar.app.google/VfP3ygN6ZbCdpj9X9" className="mt-4 inline-block text-sm underline decoration-white/40 underline-offset-4">
                     See how it works →
                   </a>
                 </motion.div>
@@ -677,12 +683,18 @@ function ContactPage({
         <p className="mt-3 max-w-2xl mx-auto text-black/80">
           Bring us your bottleneck. We’ll map it, automate the grind, and add AI where it actually pays.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex items-center justify-center gap-3">
           <a
-            href="https://calendly.com/your-link"
+            href="https://calendar.app.google/VfP3ygN6ZbCdpj9X9"
             className="inline-flex items-center justify-center rounded-full border border-black/15 bg-black px-5 py-2 text-sm font-medium text-white hover:bg-black/90"
           >
             Let’s Automate
+          </a>
+          <a
+            href="https://forms.gle/1RZmwfzDTaFGpJQ79"
+            className="inline-flex items-center justify-center rounded-full border border-black/15 bg-white px-5 py-2 text-sm font-medium text-black hover:bg-black/5"
+          >
+            Discover Automations
           </a>
         </div>
       </motion.div>
@@ -809,7 +821,6 @@ function IconCode(props: React.SVGProps<SVGSVGElement>) {
 /* ---------------- Main page ---------------- */
 export default function HomeClient() {
   const theme = useSectionTheme();
-  const isMobile = useIsMobile();
 
   const [introRunning, setIntroRunning] = useState(true);
   const [showFooter, setShowFooter] = useState(false);
@@ -833,6 +844,29 @@ export default function HomeClient() {
       window.removeEventListener("resize", measure);
       ro.disconnect();
     };
+  }, []);
+
+  // ---- Footer buttons patch (no Footer.tsx edits needed) ----
+  useEffect(() => {
+    const patchFooter = () => {
+      const root = footerRef.current;
+      if (!root) return;
+      const anchors = Array.from(root.querySelectorAll<HTMLAnchorElement>("a"));
+      anchors.forEach((a) => {
+        const txt = (a.textContent || "").trim().toLowerCase();
+        if (txt.includes("get in touch")) {
+          a.href = "https://forms.gle/SaVfGjp3foDMeWuBA";
+          a.textContent = "Get In Touch";
+        } else if (txt.includes("learn to automate") || txt.includes("discover automations")) {
+          a.href = "https://forms.gle/1RZmwfzDTaFGpJQ79";
+          a.textContent = "Discover Automations";
+        }
+      });
+    };
+    patchFooter();
+    const mo = new MutationObserver(patchFooter);
+    if (footerRef.current) mo.observe(footerRef.current, { childList: true, subtree: true, characterData: true });
+    return () => mo.disconnect();
   }, []);
 
   // Helper: decide if an anchor href is a policy/terms link
@@ -863,7 +897,6 @@ export default function HomeClient() {
   // Intercept policy/terms clicks BEFORE Next.js handles navigation (capture phase)
   useEffect(() => {
     const intercept = (ev: Event) => {
-      // Find nearest anchor for any clicked/activated element
       const target = ev.target as HTMLElement | null;
       const a = target?.closest("a") as HTMLAnchorElement | null;
       if (!a) return;
@@ -872,7 +905,6 @@ export default function HomeClient() {
       const { isPrivacy, isTerms } = isPolicyHref(href);
       if (!isPrivacy && !isTerms) return;
 
-      // Stop ALL navigation (including new-tab/middle-click/keyboard)
       ev.preventDefault();
       ev.stopImmediatePropagation?.();
       ev.stopPropagation();
@@ -880,13 +912,12 @@ export default function HomeClient() {
       setPolicyType(isPrivacy ? "privacy" : "terms");
     };
 
-    // Capture phase: run BEFORE Next.js Link/router handlers
-    document.addEventListener("pointerdown", intercept, true); // earliest for mouse/touch
-    document.addEventListener("click", intercept, true);       // regular clicks/activations
-    document.addEventListener("auxclick", intercept, true);    // middle-click
+    document.addEventListener("pointerdown", intercept, true);
+    document.addEventListener("click", intercept, true);
+    document.addEventListener("auxclick", intercept, true);
     const keydownHandler = (e: Event) => {
       const ke = e as KeyboardEvent;
-      if (ke.key === "Enter" || ke.key === " ") intercept(e); // keyboard-activated links
+      if (ke.key === "Enter" || ke.key === " ") intercept(e);
     };
     document.addEventListener("keydown", keydownHandler, true);
 
@@ -917,8 +948,8 @@ export default function HomeClient() {
         {/* CommunityPage removed */}
         <ContactPage
           onInViewChange={(vis) => setShowFooter(vis)}
-          visibilityAmount={isMobile ? 0.8 : 0.55}
-          bottomPadPx={isMobile ? Math.ceil(footerH) : 0}
+          visibilityAmount={0.55}
+          bottomPadPx={Math.ceil(footerH)}
         />
       </main>
 
